@@ -28,6 +28,10 @@
       background: rgba(56,189,248,.55);
       animation: pulse 1.6s ease-out infinite;
     }
+    .fam-dot {
+      width: 10px; height: 10px; border-radius: 9999px;
+      display: inline-block; flex: 0 0 auto;
+    }
     @keyframes pulse {
       0%   { transform: scale(1);   opacity: .8; }
       100% { transform: scale(3.2); opacity: 0; }
@@ -55,7 +59,7 @@
 
   <!-- Cabecera -->
   <header class="flex items-center gap-3 px-4 py-3 border-b border-slate-800">
-    <h1 class="text-lg font-semibold tracking-tight">📍 Panel de Localización</h1>
+    <h1 class="text-lg font-semibold tracking-tight">📍 Panel familiar</h1>
     <span id="connBadge" data-state="offline"
           class="ml-auto text-xs font-bold px-2.5 py-1 rounded-full border">CONECTANDO…</span>
     <span id="clock" class="text-sm text-slate-400 tabular-nums w-20 text-right">--:--:--</span>
@@ -71,6 +75,16 @@
         <select id="deviceSelect"
                 class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-500"></select>
       </div>
+
+      <!-- Todos los miembros a la vez: color, bateria y ultima senal -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+        <div class="text-xs uppercase tracking-wider text-slate-400 mb-2">Familia</div>
+        <div id="familyList" class="space-y-1">
+          <div class="text-xs text-slate-500">Cargando…</div>
+        </div>
+      </div>
+
+      <div class="text-sm font-semibold" id="focusName">—</div>
 
       <div class="grid grid-cols-2 gap-3">
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
@@ -110,9 +124,11 @@
       </button>
 
       <p class="text-xs text-slate-500 leading-relaxed">
-        Vista pública: por seguridad solo se muestra la <b>última posición</b> de cada dispositivo.
-        El historial completo requiere sesión de administrador
+        Vista pública: se muestra la <b>última posición</b> de cada dispositivo, con la ruta de la
+        sesión del miembro seleccionado. El historial completo (paradas, huecos, recorridos y
+        exportación CSV/GPX) requiere sesión de administrador
         (<a class="underline hover:text-slate-300" href="admin.html">admin.html</a>).
+        Cada dispositivo puede ocultarse de este mapa con el interruptor 👁 del panel de admin.
       </p>
     </aside>
 

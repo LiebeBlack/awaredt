@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, master]
   pull_request:
-    paths: ["web/**", "scripts/**"]
+    paths: ["web/**", "scripts/**", "docs/**"]
   workflow_dispatch:
 
 jobs:
@@ -47,6 +47,10 @@ jobs:
           must(fs.existsSync('web/404.html'), 'falta web/404.html');
           console.log('Estructura web OK');
           "
+
+      - name: Docs — el mapa de recursos sigue coincidiendo con el código
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/check-docs.ps1
 
       - name: Guard — no placeholder credentials in config.js
         run: |

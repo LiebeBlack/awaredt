@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Politicas declaradas del agente. Solo `force-lock` (bloquear la pantalla
+  remotamente). Deliberadamente NO se declara `wipe-data` ni `reset-password`:
+  son irreversibles y no tienen sitio en este diseno.
+-->
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-policies>
+        <force-lock />
+    </uses-policies>
+</device-admin>

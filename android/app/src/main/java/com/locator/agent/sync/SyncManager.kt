@@ -38,13 +38,17 @@ class SyncManager private constructor(context: Context) {
         registerNetworkWatcher()
     }
 
-    /** Guarda un fix en el buffer cifrado y dispara envio inmediato. */
-    fun enqueue(entity: LocationEntity) {
+    /**
+     * Guarda un fix en el buffer cifrado y dispara envio inmediato.
+     * [urgent] = true ignora el gate de ahorro de bateria: se usa en los fixes
+     * puntuales ("ubicar ahora"), que no pueden quedarse esperando al worker.
+     */
+    fun enqueue(entity: LocationEntity, urgent: Boolean = false) {
         scope.launch {
             runCatching { db.locationDao().insert(entity) }
                 .onFailure { Log.e(TAG, "No se pudo persistir el fix", it) }
             updatePendingCount()
-            flushNow()
+            flushNow(force = urgent)
         }
     }
 

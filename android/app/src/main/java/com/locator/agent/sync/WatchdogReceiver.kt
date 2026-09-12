@@ -19,6 +19,8 @@ class WatchdogReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val settings = SettingsRepository.get(context)
+        // El watchdog tambien reasegura la comprobacion de manipulacion
+        TamperWorker.schedule(context)
         if (!settings.trackingEnabled || !settings.pairingComplete) return
         if (LocationService.isRunning) {
             schedule(context) // reprograma y sale

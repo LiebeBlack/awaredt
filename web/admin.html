@@ -88,6 +88,15 @@
       </div>
     </section>
 
+    <!-- Rangos rapidos + resumen del tramo -->
+    <div class="px-4 py-2 border-b border-slate-800 flex flex-wrap items-center gap-2 text-[11px] bg-slate-900/20">
+      <span class="text-slate-500 uppercase tracking-wider">Rango rápido:</span>
+      <button id="rangeToday" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded px-2 py-1">Hoy</button>
+      <button id="rangeYesterday" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded px-2 py-1">Ayer</button>
+      <button id="range7d" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded px-2 py-1">7 días</button>
+      <span id="rangeInfo" class="text-slate-500 ml-1"></span>
+    </div>
+
     <main class="grid lg:grid-cols-[1fr_420px] gap-0">
       <!-- Columna izquierda: mapa + gráficas -->
       <div class="lg:border-r border-slate-800">
@@ -97,6 +106,10 @@
           <button id="replayPlay" class="bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold rounded-lg px-3 py-2">▶ Reproducir ruta</button>
           <input id="replaySlider" type="range" min="0" max="0" value="0" class="flex-1 accent-pink-500" />
           <span id="replayTime" class="text-xs text-slate-300 tabular-nums w-32 text-right">—</span>
+          <label class="flex items-center gap-1 text-[11px] text-slate-400 cursor-pointer"
+                 title="Suaviza solo la línea dibujada (media móvil); los datos y el replay siguen intactos">
+            <input id="smoothToggle" type="checkbox" checked class="accent-sky-500" /> Suavizar
+          </label>
         </div>
 
         <div class="grid md:grid-cols-2 gap-4 p-4">
@@ -129,6 +142,86 @@
           </div>
         </div>
 
+        <div class="p-4 space-y-3">
+          <h3 class="text-xs uppercase tracking-wider text-slate-400">Rastro (paradas, huecos y ruido)</h3>
+          <div id="trailSummary" class="text-[11px] text-slate-400">—</div>
+          <div id="stopList" class="max-h-44 overflow-y-auto text-[11px] font-mono space-y-1 border border-slate-800 rounded-lg p-2 bg-slate-900/60">—</div>
+        </div>
+
+        <!-- Control parental: zonas seguras con aviso de entrada/salida -->
+        <div class="p-4 space-y-2">
+          <h3 class="text-xs uppercase tracking-wider text-slate-400">Zonas seguras (control parental)</h3>
+          <div id="fenceList" class="space-y-1 text-[11px]">—</div>
+          <details class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+            <summary class="text-sm cursor-pointer text-sky-400">➕ Añadir zona</summary>
+            <div class="mt-3 space-y-2">
+              <input id="fenceLabel" placeholder="Nombre (Casa, Colegio…)"
+                     class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm" />
+              <div class="grid grid-cols-2 gap-2">
+                <input id="fenceLat" placeholder="Latitud"
+                       class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm" />
+                <input id="fenceLon" placeholder="Longitud"
+                       class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <input id="fenceRadius" type="number" min="50" max="20000" value="200"
+                       class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm" />
+                <select id="fenceNotify"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm">
+                  <option value="both">Entrar y salir</option>
+                  <option value="enter">Solo entrar</option>
+                  <option value="exit">Solo salir</option>
+                </select>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button id="fenceFromMap" class="text-[11px] bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded px-2 py-1">Usar centro del mapa</button>
+                <button id="fenceFromLast" class="text-[11px] bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded px-2 py-1">Usar última posición</button>
+              </div>
+              <button id="fenceAdd" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg py-2">Guardar zona</button>
+              <p class="text-[11px] text-slate-500">Radio: 50 m a 20 km. La zona se evalúa en el servidor con cada envío de posición, así que el aviso aparece aunque la app esté cerrada o el móvil acabe de arrancar.</p>
+            </div>
+          </details>
+        </div>
+
+        <!-- Avisos: entradas/salidas de zona, SOS y "llegue bien" -->
+        <div class="p-4 space-y-2">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs uppercase tracking-wider text-slate-400">Avisos recientes</h3>
+            <button id="eventsRefresh" class="text-[11px] bg-slate-800 border border-slate-700 rounded px-2 py-1 hover:bg-slate-700">Actualizar</button>
+          </div>
+          <div id="eventList" class="max-h-44 overflow-y-auto text-[11px] font-mono space-y-1 border border-slate-800 rounded-lg p-2 bg-slate-900/60">—</div>
+        </div>
+
+        <!-- Postura de seguridad del dispositivo seleccionado -->
+        <div class="p-4 space-y-2">
+          <h3 class="text-xs uppercase tracking-wider text-slate-400">Estado del dispositivo</h3>
+          <div id="postureBox" class="text-[11px] leading-relaxed bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-2">—</div>
+          <p class="text-[11px] text-slate-500">
+            Cómo está configurado el teléfono y qué accesos peligrosos tiene dentro: bloqueo de pantalla,
+            parche de seguridad, root, depuración USB, Play Protect y las apps con <b>accesibilidad</b>,
+            <b>lectura de notificaciones</b> o <b>administración</b> (ahí vive el software espía, incluido
+            el que podría espiar a quien lleva este teléfono).
+          </p>
+        </div>
+
+        <!-- Control parental: apps instaladas, SOLO NOMBRES (sin uso ni horarios) -->
+        <div class="p-4 space-y-2">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs uppercase tracking-wider text-slate-400">Aplicaciones instaladas</h3>
+            <span id="appsCount" class="text-[11px] text-slate-500">—</span>
+          </div>
+          <input id="appsFilter" type="search" placeholder="Filtrar por nombre…"
+                 class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs placeholder-slate-500 focus:outline-none focus:border-slate-500" />
+          <div id="appsBox" class="max-h-52 overflow-y-auto text-[11px] border border-slate-800 rounded-lg p-2 bg-slate-900/60">—</div>
+          <p class="text-[11px] text-slate-500">
+            Nombres de las apps con icono en el lanzador (juegos, redes, mensajería), para saber qué
+            hay instalado y si toca hablar. <b>Solo nombres</b>: no hay tiempos de uso, horas de apertura
+            ni veces que se abre cada app — eso describiría su día, no su lista. Se puede desactivar
+            desde el propio teléfono (interruptor «Compartir la lista de apps»), y la app muestra en su
+            pantalla que esa lista se comparte.
+          </p>
+        </div>
+
         <div class="p-4">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-xs uppercase tracking-wider text-slate-400">Historial (página <span id="pageLabel">1</span>)</h3>
@@ -156,7 +249,22 @@
 
         <div class="p-4 space-y-3">
           <h3 class="text-xs uppercase tracking-wider text-slate-400">Dispositivos</h3>
+          <div id="alertsBox" class="text-[11px] leading-relaxed bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-2">—</div>
           <div id="deviceList" class="space-y-2"></div>
+
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-xs uppercase tracking-wider text-slate-400">Últimos comandos</h4>
+              <button id="cmdRefresh" class="text-[11px] bg-slate-800 border border-slate-700 rounded px-2 py-1 hover:bg-slate-700">Actualizar</button>
+            </div>
+            <div id="commandLog" class="space-y-1 text-[11px] font-mono text-slate-400">—</div>
+            <p class="text-[11px] text-slate-500 mt-2">
+              El teléfono recoge los comandos en su próximo sondeo (≈60 s) y reporta el resultado aquí.
+              <b>Bloquear</b> requiere el modo antirrobo activo en el dispositivo; <b>⏹</b> deja el rastreo
+              detenido hasta que se inicie a mano en el teléfono.
+            </p>
+          </div>
+
           <details class="bg-slate-900 border border-slate-800 rounded-xl p-3">
             <summary class="text-sm cursor-pointer text-sky-400">➕ Emparejar / rotar token</summary>
             <div class="mt-3 space-y-2">

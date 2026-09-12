@@ -9,30 +9,37 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.locator.agent.data.SettingsRepository
 import java.util.concurrent.TimeUnit
 
 /**
- * Red de seguridad: cada 15 minutos intenta vaciar el buffer aunque el
- * servicio este detenido. El sistema lo reprograma tras Doze sin cheats.
+ * Revisa cada 6 horas si el agente sigue en condiciones de rastrear (permisos,
+ * modo antirrobo, notificaciones, servicio) y lo sube al panel.
+ *
+ * Es la pata que responde a "¿y si me lo desactivan?": aunque el servicio se
+ * caiga, WorkManager sigue despertando al proceso y el panel se entera del
+ * motivo en horas, no en semanas. Funciona incluso sin la app abierta.
  */
-class SyncWorker(appContext: Context, params: WorkerParameters) :
+class TamperWorker(appContext: Context, params: WorkerParameters) :
     CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
+        val settings = SettingsRepository.get(applicationContext)
+        if (!settings.pairingComplete) return Result.success()
+
         return try {
-            // Red de seguridad del canal de control: si el servicio esta caido,
-            // los comandos (bloquear, alarma, ubicar) siguen llegando aqui.
-            runCatching { CommandChannel.get(applicationContext).pollOnce() }
-            SyncManager.get(applicationContext).flushNow(force = true)
+            TamperCheck.report(applicationContext)
             Result.success()
         } catch (t: Throwable) {
-            if (runAttemptCount < 5) Result.retry() else Result.failure()
+            if (runAttemptCount < 3) Result.retry() else Result.success()
         }
     }
 
     companion object {
+        private const val NAME = "tamper_check"
+
         fun schedule(context: Context) {
-            val request = PeriodicWorkRequestBuilder<SyncWorker>(15, TimeUnit.MINUTES)
+            val request = PeriodicWorkRequestBuilder<TamperWorker>(6, TimeUnit.HOURS)
                 .setConstraints(
                     Constraints.Builder()
                         .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -42,7 +49,7 @@ class SyncWorker(appContext: Context, params: WorkerParameters) :
                 .build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                "sync_positions",
+                NAME,
                 ExistingPeriodicWorkPolicy.KEEP,
                 request
             )

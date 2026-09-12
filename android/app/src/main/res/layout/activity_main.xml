@@ -99,12 +99,84 @@
             android:layout_height="wrap_content"
             android:text="Guardar configuración" />
 
+        <!-- ================= Avisos desde este teléfono ================= -->
+        <TextView style="@style/SectionTitle" android:text="Avisos desde este teléfono" />
+
+        <Button
+            android:id="@+id/btnSos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#B91C1C"
+            android:text="@string/sos_button" />
+
+        <Button
+            android:id="@+id/btnCheckin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/checkin_button" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:text="@string/sos_hint"
+            android:textColor="#8899A6" />
+
+        <!-- ================= Seguridad y control ================= -->
+        <TextView style="@style/SectionTitle" android:text="Seguridad y control" />
+
+        <TextView
+            android:id="@+id/securityText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:text="—" />
+
+        <Button
+            android:id="@+id/btnPin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Definir / cambiar PIN del propietario" />
+
+        <CheckBox
+            android:id="@+id/cbRemote"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Control remoto (ubicar, bloquear, alarma, detener)" />
+
+        <CheckBox
+            android:id="@+id/cbShareApps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Compartir la lista de apps instaladas (solo nombres, sin uso ni horarios)" />
+
+        <CheckBox
+            android:id="@+id/cbSmart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Rastreo inteligente (no gasta GPS si está quieto)" />
+
+        <Button
+            android:id="@+id/btnAntiTheft"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Activar modo antirrobo (bloqueo remoto)" />
+
+        <Button
+            android:id="@+id/btnUnpair"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Detener y desvincular dispositivo" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:textSize="12sp"
-            android:text="El rastreo funciona solo con tu consentimiento: la notificación permanente es un requisito de Android y te permite detenerlo en cualquier momento."
+            android:text="El rastreo funciona solo con tu consentimiento. La notificación permanente es un requisito de Android y el botón Detener siempre está disponible: con PIN definido, pide el PIN para evitar que un tercero apague el rastreo."
             android:textColor="#8899A6" />
     </LinearLayout>
 </ScrollView>

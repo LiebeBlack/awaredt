@@ -45,4 +45,8 @@ interface LocationDao {
 
     @Query("SELECT COUNT(*) FROM positions")
     suspend fun totalCount(): Int
+
+    /** Borra TODO el buffer local (al desvincular el dispositivo). */
+    @Query("DELETE FROM positions")
+    suspend fun clearAll(): Int
 }

@@ -12,7 +12,14 @@ import com.locator.agent.data.SettingsRepository
 class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        // BOOT_COMPLETED = reinicio; MY_PACKAGE_REPLACED = la app se actualizo
+        // (el sistema mata el servicio al reemplazar el APK: hay que relanzarlo).
+        // No se declara LOCKED_BOOT_COMPLETED: exigiria direct boot y el token
+        // esta en almacenamiento cifrado con credenciales, que ahi no existe.
+        val action = intent.action
+        if (action != Intent.ACTION_BOOT_COMPLETED &&
+            action != Intent.ACTION_MY_PACKAGE_REPLACED
+        ) return
         val settings = SettingsRepository.get(context)
         if (!settings.trackingEnabled || !settings.pairingComplete) return
 
@@ -23,6 +30,11 @@ class BootReceiver : BroadcastReceiver() {
         } catch (t: Throwable) {
             Log.w(TAG, "No se pudo relanzar en boot", t)
         }
+        // Red de seguridad: si el OEM bloquea el arranque del servicio, el
+        // worker periodico sigue comprobando y reportando el estado.
+        TamperWorker.schedule(context)
+        SyncWorker.schedule(context)
+        WatchdogReceiver.schedule(context)
     }
 
     companion object { private const val TAG = "BootReceiver" }

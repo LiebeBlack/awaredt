@@ -21,5 +21,16 @@ window.LOCATOR_CONFIG = {
 
   // Modo demo: mapa con posicion simulada (para probar sin backend).
   // Tambien puedes forzarlo con ?demo=1 en la URL.
-  demo: false
+  demo: false,
+
+  // --- Analisis del rastro (opcional; estos son los valores por defecto) -----
+  maxKmh: 250,          // un salto mas rapido que esto es ruido de GPS, no un viaje
+  maxAccuracyM: 150,    // fixes con precision peor que esto no se dibujan
+  stopRadiusM: 75,      // radio (m) para considerar que sigue en el mismo sitio
+  stopMin: 5,           // minutos minimos dentro del radio para contar una parada
+  gapMin: 10,           // minutos de silencio que se marcan como hueco
+
+  // --- Avisos de la columna Dispositivos ------------------------------------
+  alertBatteryPct: 15,  // bateria por debajo de la cual avisa (y sin cargador)
+  alertSilentMin: 360   // minutos sin reportar que se consideran "sin senal"
 };

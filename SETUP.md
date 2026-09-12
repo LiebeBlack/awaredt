@@ -25,9 +25,17 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
 
 1.2. [ ] Abrir **SQL Editor → New query**, pegar **todo** el contenido de
      [`web/supabase-setup.sql`](web/supabase-setup.sql) y pulsar **Run**
-     - Debe terminar sin errores. Crea: tablas `devices` y `positions`,
-       vista `latest_positions`, políticas RLS, funciones
-       `pair_device`, `ingest_positions`, `prune_positions` y el cron de retención.
+     - Debe terminar sin errores. Crea: tablas `devices`, `positions` y `device_commands`,
+       vistas `latest_positions`, `public_devices` y `device_health`, políticas RLS, funciones
+       `pair_device`, `ingest_positions`, `prune_positions`, las de control remoto
+       (`enqueue_command`, `pull_commands`, `ack_command`), las de revocación
+       (`revoke_self`, `revoke_device`), las de estado (`report_health`, con la postura de
+       seguridad del dispositivo: bloqueo, parche, root, USB, Play Protect, apps con
+       accesibilidad/notificaciones/admins y la lista de apps instaladas solo por nombre),
+       **control parental** (`geofences`, `geofence_events`, `geofences_eval`) y
+       **avisos del teléfono** (`device_events`, `report_event`), más el cron de retención.
+     - Si ya tenías el sistema funcionando: reejecutar este archivo es lo que actualiza
+       el backend (es idempotente). No borra datos.
 
 1.3. [ ] **Emparejar tu dispositivo** (aún en el SQL Editor):
      ```sql
@@ -66,7 +74,12 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
      mapZoom: 14,
      pollMs: 5000,                                 // sondeo cada 5 s
      staleAfterSec: 120,                           // umbral de "SIN SEÑAL"
-     demo: false                                   // dejar en false
+     demo: false,                                  // dejar en false
+
+     // Opcionales (ya tienen estos valores por defecto): umbrales del rastro
+     maxKmh: 250, maxAccuracyM: 150, stopRadiusM: 75, stopMin: 5, gapMin: 10,
+     // y de los avisos del panel
+     alertBatteryPct: 15, alertSilentMin: 360
      ```
 
 2.3. [ ] Activar Pages (UNA sola vez): **Settings → Pages → Build and
@@ -128,6 +141,8 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
      - **Precisión+**: adjunta metadatos de celdas/WiFi a cada fix (auditoría).
      - **Batería adaptativa**: bajo 20 % sin cargador ralentiza solo (recomendado ON).
      - **Notificación discreta**: notificación mínima (sigue SIEMPRE visible).
+     - **Control remoto**: acepta comandos del panel (ubicar, bloquear, alarma, detener).
+     - **Rastreo inteligente**: si no te mueves, no gasta GPS; manda un "sigo vivo" cada 5 min.
 
 4.4. [ ] Pulsar **Guardar configuración** (toast "Configuración guardada").
 
@@ -139,6 +154,19 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
 
 4.6. [ ] Pulsar **Optimizar batería (exención)** y aceptar el diálogo oficial del
       sistema → evita que el fabricante mate el servicio.
+
+4.7. [ ] (Recomendado) **Seguridad y control → Definir PIN del propietario** (4-8 dígitos).
+      A partir de ahí, detener el rastreo, cambiar la configuración, desactivar el modo
+      antirrobo o desvincular pedirán ese PIN. No se puede recuperar: apúntalo.
+
+4.8. [ ] (Opcional, teléfono **tuyo**) **Activar modo antirrobo**: abre el diálogo oficial de
+      Android y acepta. Sirve para bloquear la pantalla en remoto desde el panel y hace que
+      Android exija desactivar la protección antes de desinstalar la app. No oculta nada:
+      el icono y la notificación siguen visibles y no hay borrado remoto.
+
+4.9. [ ] (Opcional) **Detener y desvincular dispositivo**: pide el PIN, para el rastreo,
+      borra el buffer local y **invalida el token en el servidor** (elige si borras también
+      el historial). Es la salida limpia: después, el teléfono ya no puede enviar nada.
 
 4.7. [ ] Confirmar en la barra de estado la notificación **"Seguimiento activo"**
       (con botón **Detener**). Esa notificación es la prueba visible de que corre.
@@ -155,6 +183,54 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
       al volver la red, el buffer cifrado se vacía solo (posiciones sin perder).
 - [ ] `admin.html`: **Consultar** → tabla del historial, mapa con la ruta,
       gráficas de batería y distancia, **replay** con el slider, exportar **CSV/GPX**.
+- [ ] **Control remoto**: en `admin.html` → *Dispositivos*, pulsa 📍 en tu dispositivo y
+      en ≤ 60 s aparece un punto nuevo en el mapa; la caja **Últimos comandos** debe pasar
+      de `pending` a `delivered` y luego a `done`.
+      - Prueba 🔔 (suena la alarma del teléfono, se para sola en 2 min o con 🔕).
+      - Prueba 🔒: solo funciona si activaste el **modo antirrobo** en la app (paso 4.8).
+      - Prueba ⚡: en el teléfono la notificación debe cambiar a "Persecución activa · 3 s
+        (temporal)" y los puntos aparecen cada 3 s; al expirar vuelve solo al ritmo normal.
+      - Prueba ⏹: el rastreo se detiene y **no se relanza** (el watchdog queda apagado).
+- [ ] **Panel familiar** (`index.html`): con dos o más dispositivos emparejados deben verse
+      **todos los marcadores a la vez**, cada uno con su color, y la leyenda **Familia** con
+      nombre, última señal y batería. Pulsar una fila centra a esa persona.
+- [ ] **Rastro** (`admin.html`): tras unas horas de datos, la tarjeta **Rastro** debe mostrar
+      paradas (con duración), huecos, puntos descartados y tiempo en movimiento/parado.
+      La casilla **Suavizar** solo cambia la línea; CSV/GPX/replay no se tocan.
+- [ ] **Avisos**: apaga un móvil (o quítale la cobertura) y comprueba que el panel lo marca como
+      **sin señal desde hace X** en la línea de avisos, sin que desaparezca de la lista.
+- [ ] **Modo discreto de verdad**: activa *Notificación discreta* en la app y comprueba que la
+      notificación queda plegada y silenciosa (sigue visible y con su botón **Detener**).
+      Con un APK antiguo este ajuste no hacía nada: el canal de notificación no cambiaba.
+- [ ] **Mandos visibles en el teléfono**: lanza ⚡ o 📍 desde el panel y mira la app: en el estado
+      debe aparecer `último mando: burst OK` / `locate_now OK`.
+- [ ] **Zonas seguras**: en `admin.html` → *Zonas seguras* → ➕ Añadir zona, pulsa **Usar última
+      posición**, radio 200 m y guarda como "Casa". En la siguiente comprobación la zona debe decir
+      `dentro`. Después aléjate más de 200 m y espera un envío: debe aparecer el aviso **salió de Casa**
+      en *Avisos recientes* y el círculo ponerse ámbar. El primer dato tras crearla **no** avisa
+      (solo fija el estado): eso es intencionado.
+- [ ] **Avisos del teléfono**: pulsa **✅ Llegué bien** en la app → aparece en *Avisos recientes*.
+      Pulsa **🆘 SOS** (confirma el diálogo) → aviso en rojo, y la notificación pasa a
+      *Persecución activa · 2 s* durante 10 minutos.
+- [ ] **Rangos rápidos**: *Hoy* / *Ayer* / *7 días* deben recargar la consulta y el resumen del tramo
+      mostrar distancia, batería mín.–máx. y primer/último dato.
+- [ ] **Estado del dispositivo**: abre la app en el teléfono (los datos viajan al abrirse) y mira la
+      tarjeta *Estado del dispositivo* en `admin.html`: versión de Android y parche, bloqueo de
+      pantalla, Play Protect, root, depuración USB y las listas de apps con **accesibilidad**,
+      **lectura de notificaciones** y **administradores**. Con el teléfono normal debe decir
+      `bloqueo: sí`, `root: no`, `depuración USB: no` y `ninguna` en las tres listas.
+- [ ] **Control parental (lista de apps)**: en la tarjeta *Aplicaciones instaladas* del panel debe
+      aparecer el número de apps y sus nombres (`Juegos`, `WhatsApp`…), con el buscador filtrando.
+      Abre la app en el teléfono, desmarca *Compartir la lista de apps instaladas*, **Guarda** (pide
+      PIN) y abre la app otra vez: el panel debe pasar a `no compartida`, no a un `0` falso.
+- [ ] **Detección de manipulación** (lo importante si te lo desactivan): en el teléfono, quita el
+      permiso de ubicación (o desactiva el modo antirrobo) y **abre la app** para que reporte al
+      momento. En `admin.html` debe salir en la fila del dispositivo `⚠️ N problema(s)` y en la
+      línea de avisos el motivo con `hace X` (p. ej. *permiso de ubicación revocado*).
+      Restaura el permiso y el aviso desaparece en la siguiente comprobación (o al abrir la app).
+- [ ] **Resistencia del sistema**: reinicia el móvil, actualiza el APK por encima y desliza la app
+      fuera de *Recientes*: en los tres casos el rastreo debe volver solo. Comprueba también que
+      al pulsar **Detener** (con PIN) **no** vuelve: parar es parar.
 - [ ] Reiniciar el teléfono: el agente se relanza solo (`BootReceiver`) y
       la última conexión se actualiza en el panel.
 
@@ -164,14 +240,28 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
 
 - [ ] **Rotar token** si lo compartiste por accidente: `admin.html → Dispositivos →
       ➕ Emparejar / rotar token` con el MISMO label → pega el nuevo uuid+token en la app.
-- [ ] **Retención**: por defecto 7 días (cron diario). Cambiarla:
+- [ ] **Retención**: por defecto 7 días de posiciones y 30 días de comandos resueltos
+      (cron diario). Cambiarla manteniendo la limpieza de comandos:
       ```sql
-      -- p. ej. 30 días:
+      -- p. ej. 30 días de posiciones:
       create or replace function public.prune_positions() returns void
-      language sql security definer set search_path = public, extensions as $$
+      language plpgsql security definer set search_path = public, extensions as $$
+      begin
         delete from public.positions where recorded_at < now() - interval '30 days';
+        delete from public.device_commands
+         where created_at < now() - interval '30 days' and status <> 'pending';
+      end;
       $$;
       ```
+- [ ] **Revocar un teléfono perdido**: `admin.html` → *Dispositivos* → 🚫. El hash del token
+      se rota a un valor aleatorio: ese teléfono deja de poder enviar. Para volver a
+      rastrearlo hay que emparejarlo de nuevo y reconfigurarlo.
+- [ ] **Poner nombre, color y visibilidad a cada persona**: en *Dispositivos*, usa el color
+      (el mismo en los dos mapas), 👁/🙈 (ocultarlo del panel público sin perder su historial
+      en el admin) y **Renombrar** ("Móvil de Ana", "Tablet del salón"…).
+- [ ] **Persecución (`burst`)**: ⚡ en el panel. Recuerda sus límites: 10 minutos por defecto
+      (30 como máximo), vuelve sola al ritmo normal, se anuncia en la notificación y **no
+      puede reactivar** un rastreo que hayas detenido en el teléfono.
 - [ ] **Vista pública**: si prefieres que el mapa público no muestre nada sin login,
       elimina el grant a `anon` de `latest_positions` en el SQL y usa solo `admin.html`.
 - [ ] **Varios dispositivos**: repetir el paso 1.3 con otro label/token y
@@ -193,6 +283,21 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
 | `function digest(text, unknown) does not exist` al enviar posiciones | Funciones RPC antiguas con `search_path` sin el schema `extensions` (pgcrypto) | Re-ejecutar `supabase-setup.sql` COMPLETO (usa `set search_path = public, extensions`) |
 | El panel no muestra historial | No hay sesión admin, o RLS lo bloquea | Iniciar sesión en `admin.html` (paso 1.5) |
 | El servicio se apaga tras un rato | Optimización de batería del fabricante | Paso 4.6 + permitir autoinicio en Ajustes del fabricante |
+| Los comandos quedan en `pending` y nunca pasan a `done` | El agente no está sondeando: servicio parado, o control remoto apagado en la app | Comprobar que el rastreo está activo y el ajuste **Control remoto** marcado (paso 4.3) |
+| El panel admin dice *"Reejecuta supabase-setup.sql: falta la vista device_health"* | Backend antiguo: la columna `color`, `show_on_public` y la vista nueva no existen | Reejecutar `web/supabase-setup.sql` completo (es idempotente) |
+| ⚡ responde `failed: el rastreo está detenido en el dispositivo` | Alguien detuvo el rastreo en ese teléfono | Iniciarlo a mano en la app: la persecución no resucita un rastreo detenido |
+| Todos los puntos aparecen descartados en el rastro | `accuracy` peor que 150 m en una zona con mala señal | Normal en interiores/sin GPS; sube `maxAccuracyM` en `config.js` |
+| El panel familiar marca a alguien como *sin posición* para siempre | Ese móvil está emparejado pero nunca ha enviado (sin permisos, sin datos, app sin iniciar) o el `uuid`/token no coinciden | Revisar en el teléfono: permiso de ubicación, **Iniciar rastreo** y que el uuid del panel sea el de la app |
+| *Notificación discreta* marcada y la notificación sigue igual de visible | APK antiguo: el modo discreto no cambiaba de canal | Recompilar/instalar el APK nuevo (Actions → Android CI) |
+| El panel **no** avisa de permisos revocados ni de antirrobo desactivado | Backend o APK antiguos: `device_checks` y `report_health` son nuevos | Reejecutar `supabase-setup.sql` completo + APK nuevo; luego abrir la app una vez |
+| Las zonas seguras nunca avisan | La zona pertenece a **otro** dispositivo, o el primer fix solo fijó el estado | Comprueba que la zona es del dispositivo seleccionado y muévete > radio en un envío posterior |
+| *Aplicaciones instaladas* queda a `0` o vacía | El APK no es el nuevo (no tiene el bloque `<queries>`), o en ese teléfono desactivaste *Compartir la lista de apps* | Recompilar el APK y revisar el interruptor en la app; el panel dirá `no compartida` si es lo segundo |
+| Quiero **tiempo de uso** de cada app, no solo el nombre | No existe a propósito: eso describiría su día, no su lista | Para límites de tiempo, Google Family Link (ver §6 del README) |
+| *Estado del dispositivo* dice "Sin datos todavía" | El APK no es el nuevo, o el SQL no se reejecutó (faltan las columnas de postura) | Reejecutar `supabase-setup.sql` completo + APK nuevo y abrir la app una vez |
+| El rastreo **no** vuelve tras reiniciar o actualizar el APK | Autoinicio bloqueado por la capa del fabricante | Ajustes → Batería → permitir autoinicio para la app (paso 4.6) y exención de batería |
+| 🔒 responde `failed: modo antirrobo no activo` | DeviceAdmin no activado en ese teléfono | Paso 4.8 |
+| La acción **Detener** de la notificación no hace nada | Tienes un APK antiguo (el PendingIntent apuntaba a un receptor inexistente) | Recompila e instala el APK nuevo (Actions → Android CI) |
+| `permission denied for function pair_device` al emparejar desde el panel | Se aplicó el endurecimiento de permisos de la v1.1 | Empareja con la sesión de admin iniciada en `admin.html` (no con la anon key por REST) |
 | No llega nada tras reboot | Autoinicio bloqueado por capa del fabricante | Habilitar autoinicio para la app en Ajustes → Batería |
 | CI Android en rojo | Versión de dependencia o toolchain | Abrir log del paso de build; ajustar versión; push |
 | Latencia > 5 s en el mapa | Red del móvil o sondeo del panel | `pollMs` bajo; el agente envía igual cada 5 s |
@@ -201,25 +306,29 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
 
 ## 8. MAPA del proyecto (qué es cada archivo)
 
+El inventario completo —cada archivo, tabla, vista, función, política, comando, ajuste y permiso— está
+en **[`docs/MAPA-RECURSOS.md`](docs/MAPA-RECURSOS.md)**, y se comprueba contra el código con
+`pwsh -File scripts/check-docs.ps1` (también corre en la CI web). En corto:
+
 ```
 web/
-  index.html  app.js   → panel PÚBLICO (mapa en vivo, sondeo 5 s, ?demo=1)
-  admin.html  admin.js → panel ADMIN (login, historial, replay, gráficas, CSV/GPX, tokens)
+  index.html  app.js   → panel PÚBLICO: mapa FAMILIAR (todos a la vez, color y estado)
+  admin.html  admin.js → panel ADMIN (login, historial, rastro, replay, gráficas, CSV/GPX, control)
   config.js            → ÚNICO archivo de configuración de la web
   supabase-setup.sql   → esquema completo del backend (ejecutar 1 vez)
 android/
-  app/build.gradle.kts → dependencias fijadas (Room+SQLCipher, Work, OkHttp, Play Services)
   .../sync/LocationService.kt   → núcleo: Foreground Service + FusedLocation
-  .../sync/SyncManager.kt       → buffer cifrado + lotes + backoff + flush al volver la red
-  .../sync/SupabaseClient.kt    → HTTP POST al RPC ingest_positions
-  .../sync/{Boot,Watchdog}Receiver.kt → autoarranque y re-kick
-  .../MainActivity.kt           → emparejamiento, permisos, estado
-.github/workflows/
-  android.yml → compila el APK en cada push (artifact descargable)
-  web.yml     → valida JS y estructura de la web
-scripts/
-  serve.ps1   → servidor local de pruebas de la web (127.0.0.1:8765)
+  .../sync/CommandChannel.kt    → control remoto (pull + lista blanca + ack)
+  .../sync/TamperCheck.kt       → detección de manipulación + postura del dispositivo
+  .../sync/InstalledApps.kt     → control parental: apps instaladas (solo nombres)
+  .../security/PinStore.kt      → PIN con PBKDF2 + bloqueo por intentos
+  .../admin/DeviceAdmin.kt      → antirrobo: DeviceAdminReceiver + bloqueo remoto
+tools/simulate-agent.mjs        → simulador del agente para probar sin teléfono
 ```
+
+Documentación: [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) (cómo funciona),
+[`docs/API-BACKEND.md`](docs/API-BACKEND.md) (contrato del backend) y
+[`docs/OPERACION.md`](docs/OPERACION.md) (uso diario).
 
 ---
 

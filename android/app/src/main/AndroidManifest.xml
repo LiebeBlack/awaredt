@@ -20,6 +20,22 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
+    <!--
+        Control parental: para listar las apps instaladas solo se declara una
+        CONSULTA por el intent LAUNCHER. Android 11+ da visibilidad de las apps
+        que coinciden con esta consulta, asi que NO se necesita el permiso
+        restringido QUERY_ALL_PACKAGES (el que Google Play limita a antivirus y
+        gestores de archivos). Se ven las apps con icono propio, que son
+        exactamente las que un menor abre; no se listan paquetes internos ni se
+        recoge ningun dato de uso.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
     <uses-feature android:name="android.hardware.location.network" android:required="false" />
 
@@ -33,7 +49,8 @@
         <!-- Lanzador VISIBLE por diseno: transparencia del agente ante el usuario -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -51,6 +68,27 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <!-- Relanzar tras una actualizacion del APK: el sistema mata el
+                     servicio al reemplazar el paquete y nadie lo arrancaria. -->
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!--
+            Modo antirrobo (opcional, lo activa el dueño desde la app):
+            DeviceAdmin con una unica politica, force-lock (bloqueo remoto de
+            pantalla). Android exige desactivarlo antes de desinstalar la app.
+            NO se declara wipe-data ni reset-password: nada irreversible.
+        -->
+        <receiver
+            android:name=".admin.AgentDeviceAdminReceiver"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
 

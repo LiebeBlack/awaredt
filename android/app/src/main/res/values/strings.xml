@@ -3,9 +3,19 @@
     <string name="app_name">Location Agent</string>
 
     <string name="notif_channel_tracking">Seguimiento de ubicación</string>
+    <string name="notif_channel_tracking_min">Seguimiento de ubicación (discreto)</string>
     <string name="notif_tracking_title">Seguimiento activo</string>
     <string name="notif_tracking_text">Reportando ubicación en segundo plano</string>
     <string name="notif_action_stop">Detener</string>
+
+    <!-- Modo antirrobo (DeviceAdmin, solo force-lock) -->
+    <!-- Avisos desde el propio telefono (control parental / supervision) -->
+    <string name="sos_button">🆘 SOS: pedir ayuda ahora</string>
+    <string name="checkin_button">✅ Llegué bien (avisar a la familia)</string>
+    <string name="sos_hint">El SOS avisa a tu panel con tu posición, activa 10 minutos de seguimiento detallado y queda visible en la notificación. El \"llegué bien\" solo manda un aviso tranquilizador.</string>
+
+    <string name="admin_disable_warning">Si desactivas el modo antirrobo, la app podrá desinstalarse y dejará de poder bloquear la pantalla en remoto. El rastreo seguirá visible en la notificación.</string>
+    <string name="admin_enable_explanation">Permite que el agente bloquee la pantalla de forma remota desde tu panel. No habilita borrado remoto ni oculta la app: el icono y la notificación siguen visibles.</string>
 
     <string name="notif_channel_sync">Sincronización</string>
     <string name="notif_sync_title">Sincronizando datos</string>

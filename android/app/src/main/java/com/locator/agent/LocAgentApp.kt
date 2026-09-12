@@ -30,17 +30,29 @@ class LocAgentApp : Application(), Configuration.Provider {
             setShowBadge(false)
         }
 
+        // Canal aparte para el "modo discreto". En Android 8+ la importancia la
+        // fija el CANAL: con un solo canal, el setPriority(PRIORITY_MIN) del
+        // agente se ignoraba y el modo discreto no hacia absolutamente nada.
+        // IMPORTANCE_MIN = sin sonido, sin vibracion, sin asomar en la barra
+        // (plegada), pero SIEMPRE visible y con su boton Detener.
+        val trackingMin = NotificationChannel(
+            CHANNEL_TRACKING_MIN,
+            getString(R.string.notif_channel_tracking_min),
+            NotificationManager.IMPORTANCE_MIN
+        ).apply { setShowBadge(false) }
+
         val sync = NotificationChannel(
             CHANNEL_SYNC,
             getString(R.string.notif_channel_sync),
             NotificationManager.IMPORTANCE_MIN
         ).apply { setShowBadge(false) }
 
-        nm.createNotificationChannels(listOf(tracking, sync))
+        nm.createNotificationChannels(listOf(tracking, trackingMin, sync))
     }
 
     companion object {
         const val CHANNEL_TRACKING = "tracking"
+        const val CHANNEL_TRACKING_MIN = "tracking_min"
         const val CHANNEL_SYNC = "sync"
     }
 }
