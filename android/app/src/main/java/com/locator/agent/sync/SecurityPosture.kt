@@ -2,12 +2,12 @@ package com.locator.agent.sync
 
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.KeyguardManager
-import android.app.NotificationManager
 import android.app.admin.DevicePolicyManager
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
+import androidx.core.app.NotificationManagerCompat
 import com.locator.agent.data.SettingsRepository
 import org.json.JSONArray
 import org.json.JSONObject
@@ -189,8 +189,9 @@ object SecurityPosture {
 
     /** Apps que pueden leer todas las notificaciones. */
     private fun notificationListeners(context: Context): List<String> = runCatching {
-        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.getEnabledListenerPackages(context)
+        // getEnabledListenerPackages vive en NotificationManagerCompat (androidx),
+        // no en NotificationManager: la API de la plataforma no lo expone.
+        NotificationManagerCompat.getEnabledListenerPackages(context)
             .filter { it != context.packageName && !isOwnOrSystem(it, context) }
             .distinct()
     }.getOrDefault(emptyList())

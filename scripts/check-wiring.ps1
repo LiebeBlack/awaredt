@@ -119,6 +119,58 @@ foreach ($m in [regex]::Matches($manifest, 'android:name="\.([A-Za-z0-9_.]+)"'))
 }
 
 # ---------------------------------------------------------------- Web: ids
+
+# Devuelve el JS sin comentarios ni contenidos de strings: es lo unico donde
+# tienen sentido las llamadas a funciones. Sin esto, una palabra dentro de un
+# comentario ("paradas()" en un texto en espanol) parece una llamada huerfana.
+function CodigoSolo([string]$js) {
+  $out = New-Object Text.StringBuilder
+  $modo = 'code'   # code | line | block | sq | dq | regex
+  $script:enClase = $false   # dentro de [...] de un regex
+  $i = 0; $n = $js.Length
+  while ($i -lt $n) {
+    $c = $js[$i]
+    $sig = if ($i + 1 -lt $n) { $js[$i + 1] } else { [char]' ' }
+    switch ($modo) {
+      'code' {
+        if ($c -eq '/' -and $sig -eq '/') { $modo = 'line'; $i += 2; continue }
+        if ($c -eq '/' -and $sig -eq '*') { $modo = 'block'; $i += 2; continue }
+        if ($c -eq '/') {
+          # division o inicio de regex? El ultimo caracter de codigo decide;
+          # sin esto, las comillas DENTRO de un literal regex (/[&<>"']/g) se
+          # emparejan con strings reales y todo el resto del archivo se desvia.
+          $prev = ' '
+          for ($k = $out.Length - 1; $k -ge 0; $k--) { $ch = $out[$k]; if (-not [char]::IsWhiteSpace($ch)) { $prev = $ch; break } }
+          $palabra = ''
+          for ($k = $out.Length - 1; $k -ge 0; $k--) { $ch = $out[$k]; if ([char]::IsLetter($ch)) { $palabra = $ch + $palabra } else { break } }
+          $trasKeyword = 'return','typeof','new','in','of','case','delete','void','do','else' -contains $palabra
+          if ([char]::IsLetterOrDigit($prev) -or $prev -eq ')' -or $prev -eq ']' -or $prev -eq '.' -or $prev -eq '_' -or $prev -eq '$' -or $prev -eq "'" -or $prev -eq '"') {
+            if (-not $trasKeyword) { [void]$out.Append($c); $i++; continue }   # division
+          }
+          $modo = 'regex'; $i++; continue
+        }
+        if ($c -eq "'") { $modo = 'sq'; $i++; continue }
+        if ($c -eq '"') { $modo = 'dq'; $i++; continue }
+        [void]$out.Append($c); $i++; continue
+      }
+      'line' { if ($c -eq "`n") { $modo = 'code'; [void]$out.Append($c) }; $i++; continue }
+      'block' { if ($c -eq '*' -and $sig -eq '/') { $modo = 'code'; $i += 2 } else { if ($c -eq "`n") { [void]$out.Append($c) }; $i++ }; continue }
+      'sq' { if ($c -eq '\') { $i += 2; continue }; if ($c -eq "'") { $modo = 'code' }; $i++; continue }
+      'dq' { if ($c -eq '\') { $i += 2; continue }; if ($c -eq '"') { $modo = 'code' }; $i++; continue }
+      'regex' {
+        # dentro de un literal regex: una barra cierra salvo que este en una
+        # clase de caracteres ([...]) o escapada (\/)
+        if ($c -eq '\') { $i += 2; continue }
+        if ($c -eq '[') { $script:enClase = $true }
+        if ($c -eq ']') { $script:enClase = $false }
+        if ($c -eq '/' -and -not $script:enClase) { $modo = 'code' }
+        $i++; continue
+      }
+    }
+  }
+  return $out.ToString()
+}
+
 function IdsDe([string]$htmlRel) {
   $txt = Leer $htmlRel
   $out = @()
@@ -157,7 +209,33 @@ foreach ($p in $pares) {
     $fn = $m.Groups[1].Value
     if ($js -notmatch ('function\s+' + [regex]::Escape($fn) + '\b')) { Mal "$($p.Html) llama a $fn() y no esta definida en $($p.Js)" }
   }
-  Bien "$($p.Js) -> $($p.Html) (ids y handlers)"
+
+  # ---- funciones internas del JS: definidas una vez y nunca llamadas sin definir
+  # (la clase de error clasica al editar: se renombra una funcion y queda una
+  # llamada huerfana, o un pegado duplica una definicion y gana la segunda).
+  # Se analiza el CODIGO sin comentarios ni strings (ver CodigoSolo).
+  $solo = CodigoSolo $js
+  $definidas = @{}
+  foreach ($m in [regex]::Matches($solo, '(?m)function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(')) {
+    $n = $m.Groups[1].Value
+    if ($definidas.ContainsKey($n)) { Mal "$($p.Js) define $n() mas de una vez" }
+    else { $definidas[$n] = $true }
+  }
+  # Identificadores de builtin/globales que NO deben considerarse llamadas huerfanas
+  $globales = 'if','for','while','switch','catch','function','return','typeof','new','delete',
+    'void','in','do','else','try','alert','confirm','prompt','fetch','setTimeout','setInterval',
+    'clearInterval','clearTimeout','requestAnimationFrame','parseInt','parseFloat','isNaN',
+    'isFinite','String','Number','Boolean','Array','Object','JSON','Date','Math','Promise','console',
+    'L','Chart','supabase','window','document','location','navigator','localStorage',
+    'sessionStorage','URL','Blob','FileReader','escape','unescape','encodeURIComponent',
+    'decodeURIComponent'
+  foreach ($m in [regex]::Matches($solo, '(?<![.\w$])([A-Za-z_][A-Za-z0-9_]*)\s*\(')) {
+    $n = $m.Groups[1].Value
+    if ($globales -contains $n) { continue }
+    if ($n -cmatch '^[A-Z]' -and -not $definidas.ContainsKey($n)) { continue }  # constructores
+    if (-not $definidas.ContainsKey($n)) { Mal "$($p.Js) llama a $n() y no existe ninguna function $n" }
+  }
+  Bien "$($p.Js) -> $($p.Html) (ids, handlers y funciones internas)"
 }
 
 Write-Output ("Resumen: kotlin=$($kt.Count) ids=$($xmlNames.Count) strings=$($stringsDef.Count) fallos=$fail")

@@ -63,8 +63,13 @@ object TamperCheck {
 
     private const val TAG = "TamperCheck"
 
-    /** Fotografia del estado del agente, sin tocar nada. */
-    fun inspect(context: Context): TamperReport {
+    /**
+     * Fotografia del estado del agente, sin tocar nada.
+     *
+     * @param includeApps false para la pantalla del telefono (resumen rapido
+     *   sin red): el listado de apps es trabajo extra que el resumen no usa.
+     */
+    fun inspect(context: Context, includeApps: Boolean = true): TamperReport {
         val app = context.applicationContext
         val settings = SettingsRepository.get(app)
 
@@ -81,7 +86,7 @@ object TamperCheck {
         val serviceUp = LocationService.isRunning
 
         val b = BatteryMonitor(app).read()
-        val posture = SecurityPosture.inspect(app)
+        val posture = SecurityPosture.inspect(app, includeApps = includeApps)
 
         val alerts = ArrayList<String>(8)
         if (antiTheftOn && !adminActive) {
