@@ -185,7 +185,7 @@ class LocationService : LifecycleService() {
             batteryPct = b.pct,
             charging = b.charging,
             source = source,
-            provider = loc.provider,
+            provider = loc.provider ?: "fused",
             cellWifi = if (settings.precisionPlus) precision.collect() else null,
             recordedAt = loc.time
         )

@@ -13,8 +13,10 @@ class BatteryMonitor(private val context: Context) {
         // Porcentaje directo del servicio de bateria (0-100; MIN_VALUE si no disponible)
         val cap = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
         val pct = cap.takeIf { it in 1..100 }
-        // isCharging cubre AC/USB/inalambrico (API 23+, minSdk 26)
-        val charging = BatteryManager.isCharging(context)
+        // Estado de carga via propiedad del servicio (AC/USB/inalambrico)
+        val status = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_STATUS)
+        val charging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                status == BatteryManager.BATTERY_STATUS_FULL
         return BatteryInfo(pct, charging)
     }
 

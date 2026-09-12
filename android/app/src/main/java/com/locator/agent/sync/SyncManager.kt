@@ -53,38 +53,40 @@ class SyncManager private constructor(context: Context) {
         scope.launch { flushLoop(force) }
     }
 
-    private suspend fun flushLoop(force: Boolean) = flushMutex.withLock {
-        if (!settings.pairingComplete) return
-        if (!force && battery.isLowPower()) return   // en ahorro, deja los lotes para WorkManager/carga
+    private suspend fun flushLoop(force: Boolean) {
+        flushMutex.withLock {
+            if (!settings.pairingComplete) return
+            if (!force && battery.isLowPower()) return   // en ahorro, deja los lotes para WorkManager/carga
 
-        // Backoff exponencial tras fallos consecutivos: 10s, 20s, 40s... max 10 min
-        val backoffMs = if (failCount == 0) 0L else minOf(10_000L shl (failCount - 1).coerceAtMost(6), 600_000L)
-        val since = System.currentTimeMillis() - lastAttemptAt
-        if (since in 0 until backoffMs) return
+            // Backoff exponencial tras fallos consecutivos: 10s, 20s, 40s... max 10 min
+            val backoffMs = if (failCount == 0) 0L else minOf(10_000L shl (failCount - 1).coerceAtMost(6), 600_000L)
+            val since = System.currentTimeMillis() - lastAttemptAt
+            if (since in 0 until backoffMs) return
 
-        try {
-            var sentTotal = 0
-            while (true) {
-                val pending = db.locationDao().pending(BATCH)
-                if (pending.isEmpty()) break
-                val fixes = pending.map { it.toFix() }
-                api.sendBatch(fixes)
-                db.locationDao().markSent(pending.map { it.id })
-                sentTotal += fixes.size
-                if (pending.size < BATCH) break
+            try {
+                var sentTotal = 0
+                while (true) {
+                    val pending = db.locationDao().pending(BATCH)
+                    if (pending.isEmpty()) break
+                    val fixes = pending.map { it.toFix() }
+                    api.sendBatch(fixes)
+                    db.locationDao().markSent(pending.map { it.id })
+                    sentTotal += fixes.size
+                    if (pending.size < BATCH) break
+                }
+                if (sentTotal > 0) {
+                    Log.i(TAG, "Lote enviado: $sentTotal posiciones")
+                    failCount = 0
+                    // Retencion: limpia lo ya enviado con mas de 24 h
+                    db.locationDao().pruneSent(System.currentTimeMillis() - RETENTION_MS)
+                }
+            } catch (e: Exception) {
+                failCount = (failCount + 1).coerceAtMost(10)
+                Log.w(TAG, "Envio fallido (intento #$failCount): ${e.message}")
+            } finally {
+                lastAttemptAt = System.currentTimeMillis()
+                updatePendingCount()
             }
-            if (sentTotal > 0) {
-                Log.i(TAG, "Lote enviado: $sentTotal posiciones")
-                failCount = 0
-                // Retencion: limpia lo ya enviado con mas de 24 h
-                db.locationDao().pruneSent(System.currentTimeMillis() - RETENTION_MS)
-            }
-        } catch (e: Exception) {
-            failCount = (failCount + 1).coerceAtMost(10)
-            Log.w(TAG, "Envio fallido (intento #$failCount): ${e.message}")
-        } finally {
-            lastAttemptAt = System.currentTimeMillis()
-            updatePendingCount()
         }
     }
 

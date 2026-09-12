@@ -3,6 +3,7 @@ package com.locator.agent.sync
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import android.telephony.CellIdentityNr
 import android.telephony.CellInfo
 import android.telephony.CellInfoCdma
 import android.telephony.CellInfoGsm
@@ -61,8 +62,11 @@ class PrecisionCollector(private val context: Context) {
                     }
                     is CellInfoNr -> {
                         o.put("rat", "NR")
-                        val nci = runCatching { cell.cellIdentity.nci }.getOrNull()
-                        nci?.let { o.put("nci", it) }
+                        val identity = cell.cellIdentity as? CellIdentityNr
+                        identity?.let {
+                            val nci = runCatching { it.nci }.getOrNull()
+                            nci?.let { v -> o.put("nci", v) }
+                        }
                         o.put("dbm", dbmOrNull(runCatching { cell.cellSignalStrength.dbm }.getOrDefault(Int.MAX_VALUE)))
                     }
                     else -> o.put("rat", "UNKNOWN")

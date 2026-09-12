@@ -21,7 +21,7 @@ class WatchdogReceiver : BroadcastReceiver() {
         val settings = SettingsRepository.get(context)
         if (!settings.trackingEnabled || !settings.pairingComplete) return
         if (LocationService.isRunning) {
-            scheduleNext(context) // reprograma y sale
+            schedule(context) // reprograma y sale
             return
         }
         Log.i(TAG, "Watchdog: servicio caido, relanzando")
@@ -30,7 +30,7 @@ class WatchdogReceiver : BroadcastReceiver() {
         } catch (t: Throwable) {
             Log.w(TAG, "Relanzamiento fallido", t)
         }
-        scheduleNext(context)
+        schedule(context)
     }
 
     companion object {
