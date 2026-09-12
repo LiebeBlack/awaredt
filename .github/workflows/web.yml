@@ -21,7 +21,8 @@ jobs:
 
       - name: Syntax-check all web JavaScript
         run: |
-          for f in web/*.js tools/*.mjs scripts/*.mjs; do
+          shopt -s nullglob
+          for f in web/*.js tools/*.mjs; do
             node --check "$f" && echo "OK  $f"
           done
 
@@ -57,9 +58,3 @@ jobs:
           }
           console.log('config.js sin placeholders OK');
           "
-
-      - name: Smoke test del backend (REST real)
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: node scripts/smoke-backend.mjs

@@ -143,7 +143,7 @@ tools/
   simulate-agent.mjs            → simulador del agente (prueba sin APK)
 .github/workflows/
   android.yml     → APK debug en cada push (artifact)
-  web.yml         → valida JS/SQL + smoke del backend + guarda de placeholders
+  web.yml         → valida JS/SQL + guarda de placeholders
   deploy-pages.yml → publica web/ en GitHub Pages con cada push
   release.yml     → APK release al crear un tag v*
 ```

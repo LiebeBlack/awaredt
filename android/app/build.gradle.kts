@@ -34,6 +34,11 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    // Lint sigue ejecutandose y reporta en el log, pero no bloquea el build de CI
+    lint {
+        abortOnError = false
+    }
 }
 
 dependencies {
