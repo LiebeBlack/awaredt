@@ -26,6 +26,7 @@ import com.locator.agent.data.AppDatabase
 import com.locator.agent.data.SettingsRepository
 import com.locator.agent.security.PinPrompt
 import com.locator.agent.security.PinStore
+import com.locator.agent.sync.AppVisibility
 import com.locator.agent.sync.EventReporter
 import com.locator.agent.sync.LocationService
 import com.locator.agent.sync.ServiceStateHolder
@@ -158,10 +159,22 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        // Hay pantalla visible: es el unico momento en el que Android 14 permite
+        // que el servicio en primer plano tenga el tipo `location`. Se promociona
+        // ahora para que, tras un reinicio, recupere el GPS sin tocar nada mas.
+        AppVisibility.set(true)
+        if (LocationService.isRunning && settings.trackingEnabled) {
+            LocationService.start(this)
+        }
         // Abrir la app tambien es una comprobacion: si alguien ha tocado
         // permisos o el modo antirrobo, se sube ahora (sin esperar al worker).
         refreshSecurity()
         reportHealth()
+    }
+
+    override fun onStop() {
+        AppVisibility.set(false)
+        super.onStop()
     }
 
     private fun reportHealth() {

@@ -92,6 +92,14 @@ object TamperCheck {
         if (locationOk && !backgroundOk) alerts.add("ubicación en segundo plano revocada")
         if (!notificationsOk) alerts.add("notificaciones desactivadas")
         if (trackingOn && !serviceUp) alerts.add("el servicio de rastreo no está corriendo")
+        // Android 14: tras un reinicio, el sistema no deja dar al servicio el tipo
+        // `location` desde segundo plano hasta que hay una pantalla visible. Aquí
+        // se ve el caso "vivo pero sin GPS" en vez de parecer que todo va bien.
+        if (trackingOn && serviceUp && LocationService.isRunning &&
+            !LocationService.hasLocationAccess
+        ) {
+            alerts.add("rastreo sin acceso a ubicación: abre la app una vez")
+        }
         if (!trackingOn) alerts.add("rastreo detenido a mano")
         // Riesgos de configuracion del propio dispositivo (postura)
         alerts.addAll(posture.alerts)

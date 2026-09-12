@@ -125,6 +125,9 @@ class LocationService : LifecycleService() {
             stopTracking()
             return START_NOT_STICKY
         }
+        // Si llega con la app ya visible, se recupera el tipo location (Android 14
+        // lo prohibe en segundo plano: ver startInForeground).
+        promoteForeground()
         // Reaplica el request solo si cambio el intervalo/prioridad efectivos
         applyLocationRequest()
         return START_STICKY
@@ -166,6 +169,7 @@ class LocationService : LifecycleService() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             startForeground(NOTIF_ID, notification)
             foregroundHasLocation = hasLocationPermission(this)
+            setLocationAccess(foregroundHasLocation)
             return
         }
 
@@ -178,6 +182,7 @@ class LocationService : LifecycleService() {
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or dataSyncOnly
                 )
                 foregroundHasLocation = true
+                setLocationAccess(true)
                 return
             } catch (t: Throwable) {
                 // Tipico en Android 14 al arrancar desde BOOT_COMPLETED/watchdog:
@@ -188,6 +193,7 @@ class LocationService : LifecycleService() {
         }
         ServiceCompat.startForeground(this, NOTIF_ID, notification, dataSyncOnly)
         foregroundHasLocation = false
+        setLocationAccess(false)
     }
 
     /**
@@ -247,6 +253,9 @@ class LocationService : LifecycleService() {
 
     /** Texto de la notificacion: la persecucion se anuncia, nunca se disimula. */
     private fun notificationText(): String = when {
+        !hasLocationPermission(this) -> "Sin permiso de ubicación: abre la app para concederlo"
+        !foregroundHasLocation ->
+            "Sin acceso a ubicación en segundo plano: abre la app una vez"
         settings.burstActive() ->
             "Persecución activa · ${settings.burstIntervalSec} s (temporal)"
         settings.discreetNotif -> "Modo discreto activo"
@@ -258,7 +267,7 @@ class LocationService : LifecycleService() {
         val text = notificationText()
         if (text == lastNotifText) return
         lastNotifText = text
-        runCatching { startInForeground() }
+        runCatching { startInForeground(withLocation = foregroundHasLocation) }
     }
 
     // ------------------------------------------------------------------ fixes
@@ -287,7 +296,14 @@ class LocationService : LifecycleService() {
             .setMaxUpdateDelayMillis(intervalSec * 1000L)
             .build()
 
-        fused.requestLocationUpdates(request, callback, Looper.getMainLooper())
+        // Desde Android 14, pedir ubicacion en segundo plano sin acceso puede
+        // lanzar SecurityException. No debe tumbar el servicio: se informa y se
+        // reintenta cuando la app pase a primer plano (promoteForeground).
+        runCatching {
+            fused.requestLocationUpdates(request, callback, Looper.getMainLooper())
+        }.onFailure { t ->
+            Log.w(TAG, "Sin acceso a ubicación ahora mismo (¿segundo plano?): ${t.message}")
+        }
         Log.i(TAG, "Updates cada ${intervalSec}s (prioridad=$priority, quieto=$stationary)")
     }
 
@@ -433,6 +449,7 @@ class LocationService : LifecycleService() {
         settings.stopBurst() // parar es parar: sin persecucion latente
         AlarmPlayer.get(this).stop()
         isRunning = false
+        setLocationAccess(false)
         ServiceStateHolder.reset()
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -456,6 +473,16 @@ class LocationService : LifecycleService() {
 
         @Volatile
         var isRunning: Boolean = false
+            private set
+
+        /**
+         * true = el servicio esta en primer plano CON acceso a ubicacion.
+         * En Android 14, arrancarlo desde segundo plano (reinicio, watchdog)
+         * deja el servicio vivo pero sin GPS hasta que se abre la app; el panel
+         * lo denuncia con un aviso en vez de quedarse en silencio.
+         */
+        @Volatile
+        var hasLocationAccess: Boolean = false
             private set
 
         fun hasLocationPermission(context: Context): Boolean =
@@ -497,6 +524,10 @@ class LocationService : LifecycleService() {
                     Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) *
                     Math.sin(dLon / 2) * Math.sin(dLon / 2)
             return 2 * r * Math.asin(kotlin.math.sqrt(a))
+        }
+
+        internal fun setLocationAccess(value: Boolean) {
+            hasLocationAccess = value
         }
 
         fun start(context: Context) {

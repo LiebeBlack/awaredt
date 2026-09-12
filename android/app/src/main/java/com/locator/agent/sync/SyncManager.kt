@@ -57,21 +57,34 @@ class SyncManager private constructor(context: Context) {
         scope.launch { flushLoop(force) }
     }
 
-    private suspend fun flushLoop(force: Boolean) {
+    /**
+     * Vacia el buffer y ESPERA al resultado. Devuelve cuantas posiciones se
+     * enviaron realmente (0 si no habia nada o si fallo la red).
+     *
+     * Existe porque `flushNow` es "dispara y olvida": el worker y el comando
+     * remoto `flush` necesitan saber que ha pasado de verdad para poder
+     * reintentar (uno) y reportar (el otro) en vez de decir "vaciado" sin mirar.
+     */
+    suspend fun flushBlocking(force: Boolean = false): Int =
         flushMutex.withLock { flushLocked(force) }
+
+    /** Vaciado en segundo plano: nunca propaga la excepcion (nadie la espera). */
+    private suspend fun flushLoop(force: Boolean) {
+        runCatching { flushMutex.withLock { flushLocked(force) } }
+            .onFailure { Log.w(TAG, "Vaciado fallido: ${it.message}") }
     }
 
-    private suspend fun flushLocked(force: Boolean) {
-        if (!settings.pairingComplete) return
-        if (!force && battery.isLowPower()) return   // en ahorro, deja los lotes para WorkManager/carga
+    private suspend fun flushLocked(force: Boolean): Int {
+        if (!settings.pairingComplete) return 0
+        if (!force && battery.isLowPower()) return 0   // en ahorro, deja los lotes para WorkManager/carga
 
         // Backoff exponencial tras fallos consecutivos: 10s, 20s, 40s... max 10 min
         val backoffMs = if (failCount == 0) 0L else minOf(10_000L shl (failCount - 1).coerceAtMost(6), 600_000L)
         val since = System.currentTimeMillis() - lastAttemptAt
-        if (since in 0 until backoffMs) return
+        if (since in 0 until backoffMs) return 0
 
+        var sentTotal = 0
         try {
-            var sentTotal = 0
             while (true) {
                 val pending = db.locationDao().pending(BATCH)
                 if (pending.isEmpty()) break
@@ -90,10 +103,12 @@ class SyncManager private constructor(context: Context) {
         } catch (e: Exception) {
             failCount = (failCount + 1).coerceAtMost(10)
             Log.w(TAG, "Envio fallido (intento #$failCount): ${e.message}")
+            throw e   // quien espera (worker/comando) decide si reintentar
         } finally {
             lastAttemptAt = System.currentTimeMillis()
             updatePendingCount()
         }
+        return sentTotal
     }
 
     private fun updatePendingCount() {

@@ -17,14 +17,22 @@ object PinPrompt {
      * Ejecuta [onOk] sin pedir nada si no hay PIN definido; si hay PIN, lo pide.
      * Es el punto unico por el que pasan las acciones sensibles (detener,
      * cambiar ajustes, desactivar el modo antirrobo, desvincular).
+     *
+     * [message] es opcional: permite explicar la consecuencia de lo que se va a
+     * hacer ("El rastreo se detendra...") sin repetir el texto por defecto.
      */
-    fun runGuarded(activity: Activity, title: String, onOk: () -> Unit) {
+    fun runGuarded(
+        activity: Activity,
+        title: String,
+        message: String? = null,
+        onOk: () -> Unit
+    ) {
         val store = PinStore.get(activity)
         if (!store.isSet) {
             onOk()
             return
         }
-        ask(activity, title, "Introduce tu PIN para continuar", onOk)
+        ask(activity, title, message ?: "Introduce tu PIN para continuar", onOk)
     }
 
     /** Pide el PIN mostrando el motivo; si acierta, ejecuta [onOk]. */
