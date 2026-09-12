@@ -31,8 +31,40 @@ Si el panel dice *«Reejecuta supabase-setup.sql: falta …»* es exactamente es
   [`API-BACKEND.md`](API-BACKEND.md), [`OPERACION.md`](OPERACION.md) y el comprobador
   `scripts/check-docs.ps1`, que corre en la CI web.
 
+### Correcciones de la auditoría de integración (todo el sistema)
+
+- **Android 14 rompía el arranque tras un reinicio.** Crear un servicio en primer plano de tipo
+  `location` con la app en segundo plano lanza `SecurityException` (la ubicación es un permiso «mientras
+  se usa»), así que `BootReceiver` y el watchdog mataban el proceso: justo lo contrario de «sobrevive al
+  sistema». Ahora el servicio arranca con `dataSync`, se **promociona** a `location` cuando hay pantalla
+  visible, la notificación lo dice y el panel lo denuncia (`rastreo sin acceso a ubicación: abre la app
+  una vez`). En Android 8–13 no cambia nada.
+- **El worker de sincronización no podía fallar.** Llamaba a `flushNow`, que es «dispara y olvida» y
+  devuelve de inmediato: siempre respondía *success* y su `Result.retry()` no servía para nada. Ahora usa
+  `SyncManager.flushBlocking()`, que espera al resultado real y propaga el fallo.
+- **El comando `flush` mentía.** Respondía «buffer vaciado» sin mirar si se había enviado algo; ahora
+  informa cuántas posiciones se enviaron de verdad.
+- **La alarma remota podía quedarse muda.** `MediaPlayer` se creaba y se controlaba desde un hilo sin
+  `Looper` (el sondeo de comandos corre en IO), así que su callback de preparación nunca llegaba. Ahora
+  se arranca y se detiene en el hilo principal.
+- **Pedir ubicación sin acceso podía tumbar el servicio.** `requestLocationUpdates` no estaba protegido;
+  en segundo plano, sin acceso, puede lanzar. Ahora se captura, se registra y se reintenta al promocionar
+  el servicio.
+- **El APK de release nunca se compilaba en la CI** (solo `assembleDebug`), y es el único que pasa por R8
+  con `minifyEnabled`/`shrinkResources`. Un fallo de reglas ProGuard se descubría al etiquetar la
+  versión, ya con usuarios. Se añadió el paso `assembleRelease` a *Android CI* y las reglas que faltaban
+  para que WorkManager encuentre sus `Worker` por reflexión.
+- **Comprobaciones nuevas**: `scripts/check-wiring.ps1` (cada `R.id`/`R.string`/`@string`/`@color`
+  existe, el tipo del `findViewById` coincide con la etiqueta XML, cada clase del manifiesto existe y en
+  su paquete, cada archivo está en la carpeta de su `package`, y cada id y cada `onclick` que usa el
+  JavaScript existe en su HTML) y el workflow `quality.yml`, que lo ejecuta junto con las comprobaciones
+  de XML y de documentación en cada push.
+
 ### Correcciones
 - **`shareApps` sin definir** en `SecurityPosture.inspect`: el módulo no habría compilado.
+- **`PinPrompt.runGuarded` no aceptaba el motivo**: `MainActivity` lo llamaba con un tercer argumento
+  («El rastreo se detendrá y se cerrará la notificación») y eso no compilaba. Ahora el mensaje es
+  opcional en la misma función.
 - **Las apps del sistema se excluían por `FLAG_SYSTEM`**, lo que ocultaba YouTube, Maps, Chrome y Gmail
   antes de actualizarse. El filtro correcto es tener icono de lanzador.
 - **Listar apps en el hilo de la interfaz**: `TamperCheck.summary()` ejecutaba la consulta al

@@ -39,7 +39,7 @@ Desde la ficha de cada dispositivo en el panel:
 
 | Botón | Qué hace | Ojo con |
 |---|---|---|
-| 📍 | **Ubicar ahora**: fix inmediato de alta precisión | — |
+| 📍 | **Ubicar ahora**: fix inmediato de alta precisión | Envía **un** punto y no reactiva el rastreo, así que funciona aunque esté detenido |
 | 🔒 | **Bloquear pantalla** | Requiere modo antirrobo activo; da `failed` con el motivo si no lo está |
 | 🔔 | **Alarma** a volumen de alarma, aunque esté en silencio | Se detiene sola a los 2 minutos |
 | 🔕 | Detener la alarma | — |
@@ -52,7 +52,8 @@ Desde la ficha de cada dispositivo en el panel:
 
 Los comandos se recogen en el **próximo sondeo** (cada 60 s) y el resultado real (`done`/`failed` +
 motivo) aparece en *Últimos comandos*. Un teléfono apagado o sin red no ejecuta órdenes viejas: las que
-esperan más de 10 minutos caducan.
+esperan más de 10 minutos caducan. El propio teléfono muestra `último mando: alarma OK` en su pantalla:
+quien lo lleva ve que el panel le acaba de mandar algo.
 
 > **Expectativa honesta:** nada de esto impide que alguien con el teléfono desbloqueado en la mano apague
 > lo que quiera. Lo que sí garantiza es que **no lo haga sin que te enteres**: el aviso de manipulación
@@ -120,6 +121,8 @@ importancia; **nunca** la oculta), **rastreo inteligente** y **radio de quieto**
 | *Aplicaciones instaladas* vacía o `0` | APK antiguo o interruptor desactivado | Recompilar el APK / revisar el interruptor en la app |
 | *Estado del dispositivo*: “Sin datos todavía” | Backend o APK antiguos | Reejecutar `supabase-setup.sql` completo y abrir la app una vez |
 | Los comandos se quedan *pending* | El móvil está apagado, sin red o con la app congelada por el fabricante | Esperar; caducan a los 10 min. Revisar exención de batería |
+| `rastreo sin acceso a ubicación: abre la app una vez` | Android 14+: tras un reinicio el sistema no deja que el servicio de ubicación arranque desde segundo plano | Abrir la app una vez en ese teléfono; recupera el GPS y el aviso desaparece |
+| El aviso `sin acceso a ubicación` no se va aunque abra la app | Falta el permiso de ubicación, o el teléfono bloqueó el arranque de la app | Conceder ubicación (y «todo el tiempo») y revisar el autoinicio del fabricante |
 
 ## 9. Privacidad, legalidad y límites
 

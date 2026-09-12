@@ -1,0 +1,30 @@
+name: Comprobaciones
+
+# Estas tres comprobaciones son baratas (segundos) y atrapan errores que ni el
+# compilador detecta: un id que el JavaScript busca y no existe, una clase que el
+# manifiesto declara en otro paquete, un recurso que no esta, o documentacion que
+# se quedo atras. Corren en cada push y en cada pull request.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: XML de Android (estructura, 8 archivos)
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/check-xml.ps1
+
+      - name: Cableado (R.id, R.string, paquetes del manifiesto, JS <-> HTML)
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/check-wiring.ps1
+
+      - name: Documentacion al dia (mapa de recursos y conteos)
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/check-docs.ps1

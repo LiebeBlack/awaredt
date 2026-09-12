@@ -48,10 +48,6 @@ jobs:
           console.log('Estructura web OK');
           "
 
-      - name: Docs — el mapa de recursos sigue coincidiendo con el código
-        shell: pwsh
-        run: pwsh -NoProfile -File scripts/check-docs.ps1
-
       - name: Guard — no placeholder credentials in config.js
         run: |
           node -e "

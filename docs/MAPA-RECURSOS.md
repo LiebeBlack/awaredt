@@ -185,7 +185,7 @@ Lista **cerrada**: el agente ignora cualquier otro valor aunque llegue en la res
 
 | Comando | Desde `admin.html` | Qué hace en el teléfono | Límite |
 |---|---|---|---|
-| `locate_now` | 📍 | Fix inmediato de alta precisión, sin esperar al ciclo | — |
+| `locate_now` | 📍 | Fix inmediato de alta precisión, sin esperar al ciclo | Envía **un solo** punto y no reactiva el rastreo, así que también funciona con el rastreo detenido |
 | `flush` | (interno) | Vacía el buffer cifrado ya | — |
 | `lock` | 🔒 | Bloquea la pantalla | Requiere modo antirrobo activo |
 | `alarm` | 🔔 | Suena la alarma a volumen de alarma | Auto-parada a los 2 min |
@@ -263,18 +263,24 @@ broadcasts implícitos abiertos.
 | `.github/workflows/android.yml` | Compila el APK (Gradle) |
 | `.github/workflows/web.yml` | `node --check` de los JS, estructura de páginas y SQL, ausencia de credenciales de ejemplo |
 | `.github/workflows/deploy-pages.yml` | Publica `web/` en GitHub Pages |
+| `.github/workflows/quality.yml` | XML, cableado (ids/strings/paquetes/JS) y documentación al día |
 | `.github/workflows/release.yml` | APK firmado y publicación de la release |
 | `scripts/check-xml.ps1` | Los 8 XML de `android/` |
 | `scripts/serve.ps1` | Servidor local para probar el panel |
 | `scripts/check-docs.ps1` | **Este mapa**: que cada recurso del código siga documentado aquí |
+| `scripts/check-wiring.ps1` | Cableado: cada `R.id`/`R.string`/`@string`/`@color` existe, el tipo del `findViewById` coincide con el XML, cada clase del manifiesto existe en su paquete, cada archivo está en la carpeta de su `package`, y cada id/handler que usa el JavaScript existe en su HTML |
 | `tools/simulate-agent.mjs` | Simulador del agente (Node 18+): llena los paneles con un recorrido real por el mismo RPC, sin necesidad de un teléfono |
 
 ## 11. Cómo se mantiene
 
 ```bash
-pwsh -File scripts/check-docs.ps1
+pwsh -File scripts/check-docs.ps1      # esto documento <-> codigo
+pwsh -File scripts/check-wiring.ps1    # ids, strings, paquetes, JS <-> HTML
+pwsh -File scripts/check-xml.ps1       # los 8 XML de android/
 ```
 
-Compara el código con este documento: tablas, vistas, funciones, políticas, comandos remotos y claves
-de ajuste. Si añades un recurso y no lo documentas, el script falla y lo nombra. La misma comprobación
-corre en la CI web, así que la documentación no puede quedarse atrás en silencio.
+El primero compara el código con este documento: tablas, vistas, funciones, políticas, comandos remotos
+y claves de ajuste, incluidos **los conteos declarados** (si aparece una tabla y el mapa sigue diciendo
+«7 tablas», falla). El segundo vigila el cableado entre piezas. Los tres corren en el workflow
+*Comprobaciones* (`quality.yml`), así que ni la documentación ni las referencias se quedan atrás en
+silencio.

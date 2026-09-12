@@ -29,6 +29,13 @@ jobs:
         working-directory: android
         run: gradle --no-daemon :app:assembleDebug :app:lintDebug
 
+      # El APK de release es el que se instala en los moviles y es el UNICO que
+      # pasa por R8 (minify + shrinkResources). Si no se compila aqui, un fallo de
+      # reglas ProGuard solo aparece al etiquetar una version, ya con usuarios.
+      - name: Build release APK (R8 + shrinkResources)
+        working-directory: android
+        run: gradle --no-daemon :app:assembleRelease
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7
         with:

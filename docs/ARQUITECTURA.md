@@ -130,7 +130,8 @@ es Google Family Link.
 
 | Situación | Qué pasa | Mecanismo |
 |---|---|---|
-| Reinicio del teléfono | El rastreo vuelve solo | `BootReceiver` + `BOOT_COMPLETED` |
+| Reinicio del teléfono (Android 8–13) | El rastreo vuelve solo | `BootReceiver` + `BOOT_COMPLETED` |
+| Reinicio del teléfono (Android 14+) | Arranca en modo `dataSync` **sin GPS** y avisa; recupera la ubicación al abrir la app una vez | Promoción del tipo de servicio en primer plano + alerta en `device_checks` |
 | Actualización del APK | Vuelve solo (el sistema mata el servicio al reemplazar el paquete) | `MY_PACKAGE_REPLACED` |
 | Muerte del proceso | Se relanza | `START_STICKY` + `onDestroy` + watchdog de 15 min |
 | Deslizar la app fuera de *Recientes* | El watchdog reprograma | `onTaskRemoved` |
@@ -144,6 +145,12 @@ Lo que **no** hace, por decisión de diseño: ocultarse del usuario, esconder la
 suplantar otra aplicación, impedir el force-stop, reinstalarse solo, borrar el teléfono en remoto o
 seguir rastreando después de una parada deliberada. Un sistema que ignora la orden de parar deja de ser
 seguridad y pasa a ser exactamente el problema que dice resolver.
+
+Y lo que **no puede** hacer, porque lo prohíbe Android: desde Android 14, crear un servicio en primer
+plano de tipo `location` con la app en segundo plano lanza `SecurityException` (la ubicación es un
+permiso «mientras se usa»). El agente no lo intenta a ciegas: arranca con `dataSync`, se **promociona**
+a `location` en cuanto hay una pantalla visible y, mientras tanto, lo cuenta en la notificación y en
+`device_checks` en lugar de fingir que todo va bien.
 
 ## 7. Consumo y recursos
 

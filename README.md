@@ -20,6 +20,14 @@ exige desactivar esa protección antes de poder desinstalar la app. No hay borra
 (no se declara `wipe-data`). El icono y la notificación **siguen visibles**: no es un modo
 encubierto, es una protección antirrobo sobre un teléfono propio.
 
+**Limitación de Android 14 (y posteriores), que conviene saber de antemano:** tras un reinicio el
+sistema no deja crear un servicio de ubicación desde segundo plano (la ubicación es un permiso
+«mientras se usa»; solo se libran apps *device owner*, widgets o una pulsación en una notificación). El
+agente arranca igualmente —sigue reportando estado y recibiendo comandos—, lo dice en su notificación y
+en el panel (*rastreo sin acceso a ubicación: abre la app una vez*), y recupera el GPS en cuanto se abre
+la app una vez. No es un fallo del agente: es una regla del sistema que afecta a cualquier app con
+`targetSdk 34`. En Android 8–13 el reinicio se recupera solo.
+
 > 📋 **Guía operativa paso a paso (checklist con casillas): ver [`SETUP.md`](SETUP.md).**
 > Este README es la referencia técnica; SETUP.md es la lista de "qué hacer en qué orden".
 
@@ -413,6 +421,14 @@ Todo se lee con APIs públicas, sin permisos especiales, y los riesgos aparecen 
 avisos (`1 app(s) con accesibilidad: …`, `dispositivo con root`, `parche de seguridad antiguo`).
 Sirve tanto para saber cómo está el teléfono de un menor como para **detectar software espía
 instalado en tu propio teléfono** — incluidas las tres categorías que se usan para espiar.
+
+**Límites de esta detección, sin adornos:** la de root es de mejor esfuerzo (Magisk y similares la
+ocultan); se excluyen los paquetes del propio sistema para no llenar la vista de ruido, así que un espía
+disfrazado de `com.android.*` podría pasar desapercibido; en algunos fabricantes leer ajustes globales
+(ADB, Play Protect) devuelve el valor por defecto; y en Android 11+ la visibilidad de paquetes puede
+hacer que una lista salga incompleta — **una lista vacía no prueba que no haya nada**. Se declaran las
+consultas del manifiesto para las tres categorías, pero la conclusión honesta es que esto sirve para ver
+lo evidente, no como antivirus.
 
 ### Control parental: lista de aplicaciones (solo nombres)
 
