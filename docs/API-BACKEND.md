@@ -136,12 +136,14 @@ public.ack_command(p_device_id uuid, p_token text, p_command_id bigint,
 ### 3.4 Revocación
 
 ```sql
-public.revoke_self(p_device_id uuid, p_token text, p_purge boolean default false) returns void
-public.revoke_device(p_device_id uuid, p_purge boolean default false) returns void
+public.revoke_self(p_device_id uuid, p_token text, p_purge boolean default false) returns integer
+public.revoke_device(p_device_id uuid, p_purge boolean default false)           returns integer
 ```
 - `revoke_self`: desde el teléfono (token válido). `revoke_device`: desde el panel (`authenticated`).
 - Rota el `secret_hash` a un valor aleatorio que nadie conoce ⇒ el token deja de servir.
-- Con `p_purge = true` borra además el historial de posiciones de ese dispositivo.
+- Expira los comandos que quedaran en la cola de ese dispositivo.
+- Con `p_purge = true` borra además el historial de posiciones; **devuelve cuántas borró** (0 si no se
+  pidió purga).
 
 ### 3.5 Estado y avisos
 
@@ -168,9 +170,10 @@ Informe del agente (claves; `TamperReport.toJson`):
 ```sql
 public.report_event(p_device_id uuid, p_token text, p_kind text,
                     p_note text default null, p_lat double precision default null,
-                    p_lon double precision default null) returns void
+                    p_lon double precision default null) returns bigint
 ```
-- `p_kind` en `sos` / `checkin`. Inserta en `device_events`. Nota recortada a 200 caracteres.
+- `p_kind` en `sos` / `checkin` (cualquier otro valor se rechaza). Inserta en `device_events` y
+devuelve el `id` del aviso. Nota recortada a 200 caracteres.
 
 ### 3.6 Internas y de mantenimiento
 
