@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -73,8 +74,9 @@ class CommandChannel private constructor(context: Context) {
                     "fix solicitado"
                 }
                 "flush" -> {
-                    SyncManager.get(app).flushNow(force = true)
-                    "buffer vaciado"
+                    // Espera al resultado real: "vaciado" solo si de verdad se envió
+                    val sent = SyncManager.get(app).flushBlocking(force = true)
+                    "enviadas $sent posiciones"
                 }
                 "lock" -> {
                     if (DeviceAdmin.lockNow(app)) "pantalla bloqueada"
@@ -84,16 +86,19 @@ class CommandChannel private constructor(context: Context) {
                     }
                 }
                 "alarm" -> {
-                    AlarmPlayer.get(app).start()
+                    // MediaPlayer se crea y se controla en el hilo principal: en un
+                    // hilo sin Looper sus callbacks (onPrepared) no llegan y la
+                    // alarma se quedaba muda.
+                    withContext(Dispatchers.Main) { AlarmPlayer.get(app).start() }
                     "alarma activa (2 min máx.)"
                 }
                 "stop_alarm" -> {
-                    AlarmPlayer.get(app).stop()
+                    withContext(Dispatchers.Main) { AlarmPlayer.get(app).stop() }
                     "alarma detenida"
                 }
                 "stop_tracking" -> {
                     settings.trackingEnabled = false
-                    AlarmPlayer.get(app).stop()
+                    withContext(Dispatchers.Main) { AlarmPlayer.get(app).stop() }
                     LocationService.stop(app)
                     "rastreo detenido"
                 }
