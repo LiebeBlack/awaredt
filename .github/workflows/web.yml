@@ -3,9 +3,8 @@ name: Web CI
 on:
   push:
     branches: [main, master]
-    paths: ["web/**", ".github/workflows/web.yml"]
   pull_request:
-    paths: ["web/**"]
+    paths: ["web/**", "scripts/**"]
   workflow_dispatch:
 
 jobs:
@@ -22,7 +21,7 @@ jobs:
 
       - name: Syntax-check all web JavaScript
         run: |
-          for f in web/*.js tools/*.mjs; do
+          for f in web/*.js tools/*.mjs scripts/*.mjs; do
             node --check "$f" && echo "OK  $f"
           done
 
@@ -47,3 +46,20 @@ jobs:
           must(fs.existsSync('web/404.html'), 'falta web/404.html');
           console.log('Estructura web OK');
           "
+
+      - name: Guard — no placeholder credentials in config.js
+        run: |
+          node -e "
+          const fs = require('fs');
+          const c = fs.readFileSync('web/config.js', 'utf8');
+          if (c.includes('TU-PROYECTO') || c.includes('PEGA-TU-CLAVE')) {
+            throw new Error('config.js aún contiene credenciales de ejemplo');
+          }
+          console.log('config.js sin placeholders OK');
+          "
+
+      - name: Smoke test del backend (REST real)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: node scripts/smoke-backend.mjs

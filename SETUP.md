@@ -69,8 +69,10 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
      demo: false                                   // dejar en false
      ```
 
-2.3. [ ] Activar Pages: **Settings → Pages → Deploy from a branch →
-     `main` / (root) → Save**. Esperar ~1 min.
+2.3. [ ] Activar Pages (UNA sola vez): **Settings → Pages → Build and
+     deployment → Source = "GitHub Actions"**. Desde ese momento CADA push a
+     `main` recompila y republica el panel solo (workflow **Deploy panel**).
+     No vuelvas a tocar nada: el despliegue es automático.
 
 2.4. [ ] Verificar (sin datos aún):
      - `https://TU-USUARIO.github.io/TU-REPO/` → mapa visible + banner rojo
@@ -79,7 +81,12 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
      - Prueba rápida sin backend: `.../index.html?demo=1` → dispositivo simulado.
      - `.../admin.html` → inicia sesión con el usuario del paso 1.5.
 
-2.5. [ ] Confirmar que la CI web pasa: pestaña **Actions → Web CI** (verde).
+2.5. [ ] Confirmar en **Actions** que los tres workflows quedan verdes:
+     - **Web CI** — sintaxis JS/SQL, sin placeholders en config.js y smoke del
+       backend real (si defines los secrets `SUPABASE_URL` y
+       `SUPABASE_ANON_KEY`; si no, valida config.js).
+     - **Android CI** — APK en cada push (artifact `locator-agent-debug-apk`).
+     - **Deploy panel** — publica `web/` en GitHub Pages automáticamente.
 
 ---
 

@@ -42,8 +42,9 @@ notificación a prioridad mínima — nunca la elimina.
 
 ## 2. Publicar el panel en GitHub Pages
 
-1. Sube la carpeta [`web/`](web/) a un repositorio de GitHub
-   (Configuración → Pages → Deploy from branch → `main` / root).
+1. Sube el repositorio a GitHub y activa **Settings → Pages → Source =
+   "GitHub Actions"** (una sola vez). El workflow `deploy-pages.yml` publica
+   `web/` automáticamente con cada push a `main`.
 2. Edita `web/config.js` con tus datos:
    ```js
    supabaseUrl: "https://xxxx.supabase.co",
@@ -141,9 +142,10 @@ android/app/src/main/java/com/locator/agent/
 tools/
   simulate-agent.mjs            → simulador del agente (prueba sin APK)
 .github/workflows/
-  android.yml → APK debug en cada push (artifact)
-  web.yml     → validación de la web
-  release.yml → APK release al crear un tag v*
+  android.yml     → APK debug en cada push (artifact)
+  web.yml         → valida JS/SQL + smoke del backend + guarda de placeholders
+  deploy-pages.yml → publica web/ en GitHub Pages con cada push
+  release.yml     → APK release al crear un tag v*
 ```
 
 ## 5. Seguridad y límites conocidos
