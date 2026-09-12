@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Localización · Administración</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    #map { height: 100%; width: 100%; z-index: 0; }
+    .marker-dot {
+      width: 14px; height: 14px; border-radius: 9999px;
+      background: #38bdf8; border: 2px solid #fff;
+      box-shadow: 0 0 8px rgba(56,189,248,.9);
+    }
+    .replay-dot {
+      width: 18px; height: 18px; border-radius: 9999px;
+      background: #f472b6; border: 3px solid #fff;
+      box-shadow: 0 0 12px rgba(244,114,182,.95);
+    }
+    table thead th { position: sticky; top: 0; background: #0f172a; z-index: 1; }
+    .spin { animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen">
+
+  <!-- ============================= LOGIN ============================= -->
+  <section id="loginView" class="hidden min-h-screen flex items-center justify-center p-4">
+    <form id="loginForm" class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+      <h1 class="text-xl font-semibold">🔐 Acceso administrador</h1>
+      <p class="text-xs text-slate-400">Historial completo, reproducción de rutas y gestión de dispositivos.</p>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Correo</label>
+        <input id="loginEmail" type="email" required autocomplete="username"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" />
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Contraseña</label>
+        <input id="loginPass" type="password" required autocomplete="current-password"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" />
+      </div>
+      <div id="loginError" class="hidden text-sm text-red-400 bg-red-950/60 border border-red-900 rounded-lg px-3 py-2"></div>
+      <button type="submit" id="loginBtn"
+              class="w-full bg-sky-600 hover:bg-sky-500 text-white font-medium rounded-lg py-2 text-sm">Iniciar sesión</button>
+      <p class="text-[11px] text-slate-500">¿Sin cuenta? Créala en Supabase → Authentication → Users (o con invites). Volver al <a class="underline" href="index.html">panel en vivo</a>.</p>
+    </form>
+  </section>
+
+  <!-- ============================= APP =============================== -->
+  <div id="appView" class="hidden">
+
+    <div id="adminBanner" class="hidden bg-red-900/80 border-b border-red-700 text-red-100 text-sm px-4 py-2">
+      ⚠️ Falta configurar <code class="mx-1">config.js</code> (URL y clave anon de Supabase).
+    </div>
+
+    <header class="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-slate-800">
+      <h1 class="text-lg font-semibold">🛰️ Administración</h1>
+      <a href="index.html" class="text-xs text-sky-400 hover:text-sky-300 underline">← en vivo</a>
+      <span id="userBadge" class="text-xs text-slate-400 ml-2"></span>
+      <span id="connBadge" class="ml-auto text-xs font-bold px-2.5 py-1 rounded-full border bg-slate-800 text-slate-300 border-slate-600">—</span>
+      <button id="logoutBtn" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-3 py-1.5">Salir</button>
+    </header>
+
+    <!-- Barra de consulta -->
+    <section class="px-4 py-3 border-b border-slate-800 grid grid-cols-2 md:grid-cols-6 gap-3 items-end bg-slate-900/40">
+      <div class="col-span-2">
+        <label class="block text-xs text-slate-400 mb-1">Dispositivo</label>
+        <select id="deviceSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"></select>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Desde</label>
+        <input id="dateFrom" type="datetime-local" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-sm focus:border-sky-500 focus:outline-none" />
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Hasta</label>
+        <input id="dateTo" type="datetime-local" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-sm focus:border-sky-500 focus:outline-none" />
+      </div>
+      <button id="queryBtn" class="bg-sky-600 hover:bg-sky-500 text-white text-sm font-medium rounded-lg py-2">Consultar</button>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="csvBtn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs rounded-lg py-2">CSV</button>
+        <button id="gpxBtn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs rounded-lg py-2">GPX</button>
+      </div>
+    </section>
+
+    <main class="grid lg:grid-cols-[1fr_420px] gap-0">
+      <!-- Columna izquierda: mapa + gráficas -->
+      <div class="lg:border-r border-slate-800">
+        <div class="h-[52vh] lg:h-[56vh]"><div id="map"></div></div>
+
+        <div id="replayBar" class="hidden px-4 py-3 border-y border-slate-800 flex items-center gap-3 bg-slate-900/60">
+          <button id="replayPlay" class="bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold rounded-lg px-3 py-2">▶ Reproducir ruta</button>
+          <input id="replaySlider" type="range" min="0" max="0" value="0" class="flex-1 accent-pink-500" />
+          <span id="replayTime" class="text-xs text-slate-300 tabular-nums w-32 text-right">—</span>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4 p-4">
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+            <h3 class="text-xs uppercase tracking-wider text-slate-400 mb-2">Batería (%)</h3>
+            <canvas id="batteryChart" height="140"></canvas>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+            <h3 class="text-xs uppercase tracking-wider text-slate-400 mb-2">Distancia por hora (km)</h3>
+            <canvas id="distanceChart" height="140"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna derecha: stats + historial + dispositivos -->
+      <aside class="divide-y divide-slate-800">
+
+        <div class="grid grid-cols-3 gap-2 p-4">
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-center">
+            <div class="text-xs text-slate-400">Puntos</div>
+            <div class="text-lg font-bold" id="statCount">0</div>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-center">
+            <div class="text-xs text-slate-400">Distancia</div>
+            <div class="text-lg font-bold" id="statKm">0 km</div>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-center">
+            <div class="text-xs text-slate-400">Duración</div>
+            <div class="text-lg font-bold" id="statDur">—</div>
+          </div>
+        </div>
+
+        <div class="p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs uppercase tracking-wider text-slate-400">Historial (página <span id="pageLabel">1</span>)</h3>
+            <div class="flex gap-1">
+              <button id="prevPage" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs hover:bg-slate-700">←</button>
+              <button id="nextPage" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs hover:bg-slate-700">→</button>
+            </div>
+          </div>
+          <div class="max-h-[46vh] overflow-y-auto border border-slate-800 rounded-lg">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="text-slate-400 text-left">
+                  <th class="px-2 py-2">Hora</th>
+                  <th class="px-2 py-2">Coordenadas</th>
+                  <th class="px-2 py-2">Bát</th>
+                  <th class="px-2 py-2">±m</th>
+                  <th class="px-2 py-2">Fuente</th>
+                  <th class="px-2 py-2"></th>
+                </tr>
+              </thead>
+              <tbody id="historyBody" class="divide-y divide-slate-800/60 font-mono"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="p-4 space-y-3">
+          <h3 class="text-xs uppercase tracking-wider text-slate-400">Dispositivos</h3>
+          <div id="deviceList" class="space-y-2"></div>
+          <details class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+            <summary class="text-sm cursor-pointer text-sky-400">➕ Emparejar / rotar token</summary>
+            <div class="mt-3 space-y-2">
+              <input id="pairLabel" placeholder="Etiqueta (nombre del dispositivo)"
+                     class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm" />
+              <input id="pairToken" placeholder="Token nuevo (mín. 16 caracteres, guárdalo: no vuelve a mostrarse)"
+                     class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono" />
+              <button id="pairBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg py-2">Emparejar dispositivo</button>
+              <p class="text-[11px] text-slate-500">Crea el par en Supabase con tu cuenta autenticada (política RLS). Copia el <b>uuid</b> y el <b>token</b> a la app Android.</p>
+            </div>
+          </details>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+name: Web CI
+
+on:
+  push:
+    branches: [main, master]
+    paths: ["web/**", ".github/workflows/web.yml"]
+  pull_request:
+    paths: ["web/**"]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Syntax-check all web JavaScript
+        run: |
+          for f in web/*.js tools/*.mjs; do
+            node --check "$f" && echo "OK  $f"
+          done
+
+      - name: Structural sanity of pages and SQL
+        run: |
+          node -e "
+          const fs = require('fs');
+          const must = (cond, msg) => { if (!cond) throw new Error(msg); };
+          for (const [page, script] of [['web/index.html','app.js'], ['web/admin.html','admin.js']]) {
+            const h = fs.readFileSync(page, 'utf8');
+            must(h.includes('config.js'), page + ' no referencia config.js');
+            must(h.includes(script), page + ' no referencia ' + script);
+            must(h.includes('id=\"map\"'), page + ' falta el contenedor del mapa');
+          }
+          const sql = fs.readFileSync('web/supabase-setup.sql', 'utf8');
+          for (const token of ['create table if not exists public.devices',
+                               'create table if not exists public.positions',
+                               'ingest_positions', 'pair_device', 'enable row level security',
+                               'latest_positions']) {
+            must(sql.includes(token), 'setup.sql falta: ' + token);
+          }
+          must(fs.existsSync('web/404.html'), 'falta web/404.html');
+          console.log('Estructura web OK');
+          "

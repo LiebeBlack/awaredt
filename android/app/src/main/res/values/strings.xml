@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Location Agent</string>
+
+    <string name="notif_channel_tracking">Seguimiento de ubicación</string>
+    <string name="notif_tracking_title">Seguimiento activo</string>
+    <string name="notif_tracking_text">Reportando ubicación en segundo plano</string>
+    <string name="notif_action_stop">Detener</string>
+
+    <string name="notif_channel_sync">Sincronización</string>
+    <string name="notif_sync_title">Sincronizando datos</string>
+    <string name="notif_sync_text">Enviando posiciones pendientes</string>
+
+    <string name="pref_tracking_enabled">tracking_enabled</string>
+    <string name="pref_device_id">device_id</string>
+    <string name="pref_device_token">device_token</string>
+    <string name="pref_supabase_url">supabase_url</string>
+    <string name="pref_supabase_key">supabase_anon_key</string>
+    <string name="pref_interval_sec">interval_sec</string>
+    <string name="pref_interval_slow_sec">interval_slow_sec</string>
+    <string name="pref_precision_plus">precision_plus</string>
+    <string name="pref_adaptive_battery">adaptive_battery</string>
+</resources>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Localización · En vivo</title>
+
+  <!-- TailwindCSS (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Supabase JS v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    #map { height: 100%; width: 100%; z-index: 0; }
+    .marker-wrap { position: relative; width: 24px; height: 24px; }
+    .marker-dot {
+      position: absolute; left: 50%; top: 50%; width: 12px; height: 12px;
+      margin: -6px 0 0 -6px; border-radius: 9999px;
+      background: #38bdf8; border: 2px solid #ffffff;
+      box-shadow: 0 0 8px rgba(56,189,248,.9);
+    }
+    .marker-pulse {
+      position: absolute; left: 50%; top: 50%; width: 12px; height: 12px;
+      margin: -6px 0 0 -6px; border-radius: 9999px;
+      background: rgba(56,189,248,.55);
+      animation: pulse 1.6s ease-out infinite;
+    }
+    @keyframes pulse {
+      0%   { transform: scale(1);   opacity: .8; }
+      100% { transform: scale(3.2); opacity: 0; }
+    }
+    #connBadge[data-state="live"]    { background:#064e3b; color:#34d399; border-color:#059669; }
+    #connBadge[data-state="stale"]   { background:#78350f; color:#fbbf24; border-color:#d97706; }
+    #connBadge[data-state="offline"] { background:#7f1d1d; color:#f87171; border-color:#dc2626; }
+    #stSource[data-src="GPS"]      { color:#34d399; }
+    #stSource[data-src="FUSED"]    { color:#38bdf8; }
+    #stSource[data-src="NETWORK"]  { color:#fbbf24; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen">
+
+  <!-- Aviso de configuracion pendiente -->
+  <div id="banner" class="hidden bg-red-900/80 border-b border-red-700 text-red-100 text-sm px-4 py-2">
+    ⚠️ Falta configurar <code class="mx-1">config.js</code>: pega la <b>URL</b> y la <b>clave anon</b> de tu
+    proyecto Supabase. Puedes ver el panel funcionando con
+    <a class="underline" href="?demo=1">?demo=1</a>.
+  </div>
+  <div id="demoNote" class="hidden bg-sky-900/70 border-b border-sky-700 text-sky-100 text-sm px-4 py-2">
+    🧪 <b>Modo demo</b>: la posición mostrada es simulada. Quita <code>?demo=1</code> y configura
+    <code>config.js</code> para datos reales.
+  </div>
+
+  <!-- Cabecera -->
+  <header class="flex items-center gap-3 px-4 py-3 border-b border-slate-800">
+    <h1 class="text-lg font-semibold tracking-tight">📍 Panel de Localización</h1>
+    <span id="connBadge" data-state="offline"
+          class="ml-auto text-xs font-bold px-2.5 py-1 rounded-full border">CONECTANDO…</span>
+    <span id="clock" class="text-sm text-slate-400 tabular-nums w-20 text-right">--:--:--</span>
+  </header>
+
+  <main class="grid lg:grid-cols-[340px_1fr] gap-0 min-h-[calc(100vh-57px)]">
+
+    <!-- Panel de estado -->
+    <aside class="p-4 space-y-4 border-b lg:border-b-0 lg:border-r border-slate-800">
+
+      <div>
+        <label for="deviceSelect" class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Dispositivo</label>
+        <select id="deviceSelect"
+                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-500"></select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+          <div class="text-xs text-slate-400">Batería</div>
+          <div class="text-2xl font-bold" id="stBattery">—</div>
+          <div class="text-xs" id="stCharging">—</div>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+          <div class="text-xs text-slate-400">Última señal</div>
+          <div class="text-sm font-semibold mt-1" id="stLastSeen">nunca</div>
+          <div class="text-xs text-slate-500" id="stTrail">Ruta sesión: <span id="trailCount">0</span> ptos</div>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+          <div class="text-xs text-slate-400">Velocidad</div>
+          <div class="text-lg font-semibold" id="stSpeed">—</div>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+          <div class="text-xs text-slate-400">Precisión</div>
+          <div class="text-lg font-semibold" id="stAccuracy">—</div>
+        </div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-2">
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-400">Fuente</span>
+          <span id="stSource" data-src="" class="font-bold">—</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-400">Coordenadas</span>
+          <span id="stCoords" class="font-mono text-xs">—</span>
+        </div>
+      </div>
+
+      <button id="followBtn"
+              class="hidden w-full bg-sky-600 hover:bg-sky-500 text-white text-sm font-medium rounded-lg py-2">
+        Seguir marcador ▶
+      </button>
+
+      <p class="text-xs text-slate-500 leading-relaxed">
+        Vista pública: por seguridad solo se muestra la <b>última posición</b> de cada dispositivo.
+        El historial completo requiere sesión de administrador
+        (<a class="underline hover:text-slate-300" href="admin.html">admin.html</a>).
+      </p>
+    </aside>
+
+    <!-- Mapa -->
+    <section class="h-[65vh] lg:h-auto p-0">
+      <div id="map"></div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
