@@ -34,6 +34,18 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!--
+            Visibilidad de las dos categorias de RIESGO que revisa la postura:
+            sin estas consultas, Android 11+ puede ocultar el paquete y la lista
+            saldria vacia sin que signifique que no hay nada (falso negativo en
+            justo la parte de seguridad). No hace falta QUERY_ALL_PACKAGES.
+        -->
+        <intent>
+            <action android:name="android.accessibilityservice.AccessibilityService" />
+        </intent>
+        <intent>
+            <action android:name="android.service.notification.NotificationListenerService" />
+        </intent>
     </queries>
 
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
