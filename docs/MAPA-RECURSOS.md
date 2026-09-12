@@ -62,7 +62,7 @@ Ruta base: `android/app/src/main/java/com/locator/agent/`
 | `sync/CommandChannel.kt` | Sondea comandos (pull cada 60 s), ejecuta, responde (`ack`) | sí |
 | `sync/EventReporter.kt` | SOS y “llegué bien” desde el teléfono | sí |
 | `sync/InstalledApps.kt` | Lista de apps con icono (solo nombres) vía `<queries>` | — |
-| `sync/LocationService.kt` | Servicio en primer plano: captura, gate de movimiento, persecución, notificación | sí (vía SyncManager) |
+| `sync/LocationService.kt` | Servicio en primer plano: captura, gate de movimiento, persecución, tipo de servicio (`dataSync`/`location` según Android 14), notificación | sí (vía SyncManager) |
 | `sync/PreciseFix.kt` | Modelo del fix listo para enviar | — |
 | `sync/PrecisionCollector.kt` | Precision+: lectura de celdas y WiFi (bajo demanda, en hilo de trabajo) | — |
 | `sync/RemoteCommand.kt` | Lista **cerrada** de comandos permitidos | — |
@@ -114,7 +114,10 @@ Ruta base: `android/app/src/main/java/com/locator/agent/`
 
 **No declarados a propósito:** `QUERY_ALL_PACKAGES`, `PACKAGE_USAGE_STATS` (acceso de uso),
 accesibilidad, instalación de paquetes, SMS, contactos, cámara y micrófono. La visibilidad de apps se
-consigue con un bloque `<queries>` del intent `LAUNCHER`, que es la vía compatible con Google Play.
+consigue con un bloque `<queries>` de **tres** intents: `LAUNCHER` (lista de apps del control parental)
+y los servicios de **accesibilidad** y de **lectura de notificaciones** (para que la postura de
+seguridad no salga vacía en Android 11+ por filtrado de visibilidad de paquetes). Es la vía compatible
+con Google Play.
 
 ## 3. Inventario: backend (Supabase)
 
