@@ -61,6 +61,13 @@ class LocationService : LifecycleService() {
     private var currentIntervalSec = 0
     private var currentPriority = -1
 
+    /**
+     * true = el servicio ya esta en primer plano CON el tipo `location`.
+     * Desde segundo plano no se puede (Android 14): se arranca con `dataSync` y
+     * se promociona al abrir la app.
+     */
+    private var foregroundHasLocation = false
+
     // --- estado del gate de movimiento (solo se envia cuando aporta) ---
     private var lastKeptLat = Double.NaN
     private var lastKeptLon = Double.NaN
@@ -83,7 +90,7 @@ class LocationService : LifecycleService() {
         battery = BatteryMonitor(this)
         fused = LocationServices.getFusedLocationProviderClient(this)
 
-        startInForeground()
+        startInForeground(withLocation = AppVisibility.visible)
         isRunning = true
         ServiceStateHolder.update { it.copy(running = true) }
 
@@ -143,17 +150,59 @@ class LocationService : LifecycleService() {
 
     // ------------------------------------------------------------------ notif
 
-    private fun startInForeground() {
+    /**
+     * Arranca (o promociona) el servicio en primer plano.
+     *
+     * Android 14+: crear un servicio en primer plano de tipo `location` desde
+     * segundo plano lanza SecurityException (la ubicacion es un permiso de tipo
+     * "mientras se usa"), asi que en ese caso se arranca solo con `dataSync` y se
+     * AVISA: el panel ve que falta acceso a ubicacion y la notificacion lo dice.
+     * Cuando el usuario abre la app, [promoteForeground] vuelve a llamar a
+     * startForeground anadiendo el tipo `location`, que es la via documentada
+     * para anadir un tipo despues de lanzar el servicio.
+     */
+    private fun startInForeground(withLocation: Boolean) {
         val notification = buildNotification()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIF_ID, notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-            )
-        } else {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             startForeground(NOTIF_ID, notification)
+            foregroundHasLocation = hasLocationPermission(this)
+            return
         }
+
+        val wantsLocation = withLocation && hasLocationPermission(this)
+        val dataSyncOnly = ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+        if (wantsLocation) {
+            try {
+                ServiceCompat.startForeground(
+                    this, NOTIF_ID, notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or dataSyncOnly
+                )
+                foregroundHasLocation = true
+                return
+            } catch (t: Throwable) {
+                // Tipico en Android 14 al arrancar desde BOOT_COMPLETED/watchdog:
+                // se degrada a dataSync y se sigue vivo (nunca se cae el proceso).
+                Log.w(TAG, "Tipo location rechazado en segundo plano; se sigue con dataSync", t)
+                foregroundHasLocation = false
+            }
+        }
+        ServiceCompat.startForeground(this, NOTIF_ID, notification, dataSyncOnly)
+        foregroundHasLocation = false
+    }
+
+    /**
+     * Promociona el servicio a tipo `location` cuando ya hay una pantalla
+     * visible. Sin esto, tras un reinicio en Android 14 el rastreo quedaria sin
+     * acceso a ubicacion hasta abrir la app a mano.
+     */
+    private fun promoteForeground() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        if (foregroundHasLocation) return
+        if (!AppVisibility.visible) return
+        if (!hasLocationPermission(this)) return
+        runCatching { startInForeground(withLocation = true) }
+            .onFailure { Log.w(TAG, "No se pudo promocionar a tipo location", it) }
+        applyLocationRequest(force = true)
     }
 
     /**
