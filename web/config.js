@@ -1,13 +1,13 @@
 // ============================================================================
-//  CONFIGURACION DEL PANEL — pega aqui los datos de TU proyecto Supabase
+//  CONFIGURACION DEL PANEL — datos del proyecto Supabase (obbehfdwuufydtzaqslb)
 //  (Supabase Dashboard > Settings > API > Project URL + anon public key)
 // ============================================================================
 window.LOCATOR_CONFIG = {
   // Pega aqui la URL de tu proyecto, ej: "https://abcdefgh.supabase.co"
-  supabaseUrl: "https://TU-PROYECTO.supabase.co",
+  supabaseUrl: "https://obbehfdwuufydtzaqslb.supabase.co",
 
   // Pega aqui la clave "anon public" (es publica; la seguridad la da RLS)
-  supabaseAnonKey: "PEGA-TU-CLAVE-ANON-PUBLICA",
+  supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iYmVoZmR3dXVmeWR0emFxc2xiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyMTA4MjcsImV4cCI6MjEwNDc4NjgyN30.uNEzfcuclT3fXd0Da8UFqXo2jm_w9Tz3uy4rctiYUSw",
 
   // Frecuencia de sondeo en milisegundos (el agente reporta cada 5 s)
   pollMs: 5000,
