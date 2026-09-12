@@ -17,3 +17,6 @@ Thumbs.db
 *.log
 captures/
 .cxx/
+
+# Credenciales locales (NUNCA subir al repo)
+secrets.local.md

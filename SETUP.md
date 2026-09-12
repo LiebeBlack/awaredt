@@ -162,7 +162,7 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
       ```sql
       -- p. ej. 30 días:
       create or replace function public.prune_positions() returns void
-      language sql security definer set search_path = public as $$
+      language sql security definer set search_path = public, extensions as $$
         delete from public.positions where recorded_at < now() - interval '30 days';
       $$;
       ```
@@ -184,6 +184,7 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
 | Badge **SIN SEÑAL RECIENTE** | El agente no reporta | Revisar pasos 4.5–4.7 (permisos/exención) |
 | "Credenciales invalidas" en el envío | UUID o token incorrectos, o dispositivo no emparejado | Repetir paso 1.3 y 4.2 |
 | `function pair_device(...) does not exist` | SQL ejecutado parcialmente | Re-ejecutar `supabase-setup.sql` completo |
+| `function digest(text, unknown) does not exist` al enviar posiciones | Funciones RPC antiguas con `search_path` sin el schema `extensions` (pgcrypto) | Re-ejecutar `supabase-setup.sql` COMPLETO (usa `set search_path = public, extensions`) |
 | El panel no muestra historial | No hay sesión admin, o RLS lo bloquea | Iniciar sesión en `admin.html` (paso 1.5) |
 | El servicio se apaga tras un rato | Optimización de batería del fabricante | Paso 4.6 + permitir autoinicio en Ajustes del fabricante |
 | No llega nada tras reboot | Autoinicio bloqueado por capa del fabricante | Habilitar autoinicio para la app en Ajustes → Batería |

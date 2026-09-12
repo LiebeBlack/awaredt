@@ -4,7 +4,11 @@
 -- ============================================================================
 
 -- 1) Extensiones -------------------------------------------------------------
-create extension if not exists pgcrypto; -- digest() (HMAC/SHA-256) + gen_random_uuid()
+-- pgcrypto (digest() SHA-256 + gen_random_uuid()). En Supabase la extension vive
+-- en el schema "extensions": las funciones de abajo incluyen ese schema en su
+-- search_path para que digest() se resuelva SIEMPRE (evita el error
+-- "function digest(text, unknown) does not exist" de ingest_positions).
+create extension if not exists pgcrypto with schema extensions;
 
 -- 2) Tablas ------------------------------------------------------------------
 create table if not exists public.devices (
@@ -69,7 +73,7 @@ create or replace function public.pair_device(p_label text, p_token text)
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_id uuid;
@@ -94,7 +98,7 @@ create or replace function public.ingest_positions(
 returns integer
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_hash  text;
@@ -151,7 +155,7 @@ create or replace function public.prune_positions()
 returns void
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
   delete from public.positions where recorded_at < now() - interval '7 days';
 $$;
@@ -168,8 +172,9 @@ end $$;
 
 -- ============================================================================
 --  EMPAREJAR TU DISPOSITIVO (paso final):
---  1. Cambia el token de ejemplo por uno largo y aleatorio (>=16 chars).
---  2. Ejecuta y COPIA el uuid devuelto.
+--  1. Ejecuta este archivo COMPLETO con Run (reemplaza las funciones antiguas).
+--  2. Cambia el token de ejemplo por uno largo y aleatorio (>=16 chars),
+--     ejecuta la linea de abajo y COPIA el uuid devuelto.
 --  3. Pega uuid + token en la app Android (Ajustes > Emparejamiento).
 --
 --  select public.pair_device('Mi Telefono', 'CAMBIA-ESTE-TOKEN-LARGO-123456');
