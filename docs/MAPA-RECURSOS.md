@@ -152,11 +152,11 @@ con Google Play.
 | `enqueue_command(device_id, command, args)` | Admin autenticado | Encola un comando con lista blanca y anti-repetición (2 min) |
 | `pull_commands(device_id, token)` | Agente (token) | Devuelve hasta 5 pendientes, los marca entregados y caduca los de más de 10 min |
 | `ack_command(device_id, token, id, status, result)` | Agente (token) | Cierra el comando con `done`/`failed` y el motivo |
-| `revoke_self(device_id, token, purge)` | Agente (token) | Rota el token en el servidor (y opcionalmente borra el historial) |
+| `revoke_self(device_id, token, purge)` | Agente (token) | Rota el token, expira su cola de comandos y borra el historial si `purge`; devuelve cuántas posiciones borró |
 | `revoke_device(device_id, purge)` | Admin autenticado | Igual, pero desde el panel |
 | `report_health(device_id, token, report)` | Agente (token) | Sube el estado y la postura (upsert: una fila por dispositivo) |
 | `geofences_eval(device_id, lat, lon, at)` | Interna (revocada para fuera) | Evalúa entradas/salidas; el primer dato solo fija el estado |
-| `report_event(device_id, token, kind, note, lat, lon)` | Agente (token) | Registra SOS y check-in |
+| `report_event(device_id, token, kind, note, lat, lon)` | Agente (token) | Registra SOS y check-in (`sos`/`checkin`); devuelve el id del aviso |
 
 ### 3.4 Seguridad de datos
 
