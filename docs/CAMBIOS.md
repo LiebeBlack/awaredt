@@ -25,8 +25,22 @@ Si el panel dice *«Reejecuta supabase-setup.sql: falta …»* es exactamente es
   estable (`release.yml`).
 - **UI premium con modo oscuro**: pantalla principal rediseñada (hero con estado en
   vivo, tarjetas por sección, paleta índigo con variante noche) y selector de tema
-  **Sistema / Claro / Oscuro** persistido (`theme_mode`). Los textos dinámicos pasaron a
-  recursos (`btn_toggle_start/stop`, `status_stopped`).
+  **Sistema / Claro / Oscuro** persistido (`theme_mode`), con el chip activo marcado.
+  Los textos dinámicos pasaron a recursos (`btn_toggle_start/stop`, `status_stopped`).
+
+### Correcciones de sincronización
+- **El backoff ahogaba los vaciados pedidos a propósito**: tras 2–3 fallos de red,
+  `flushBlocking(force = true)` (worker de 15 min, comando remoto `flush`, «ubicar
+  ahora») devolvía 0 en silencio por el backoff exponencial, pensado para los vaciados
+  automáticos. Ahora el `force` ignora el backoff y reporta el resultado real.
+- **`report_health` se subía en cada ciclo de sondeo** (cada ~60 s: 1.440 informes/día
+  con postura y lista de apps). Ahora lleva tope de 10 minutos, sin perder la
+  inmediatez del primer informe tras abrir la app o arrancar el servicio.
+- **Sin tope por vaciado**: tras un día sin red, un `flush` sostenía el mutex y la
+  conexión hasta vaciar miles de fixes. Tope de 25 lotes (500 posiciones) por vaciado;
+  el resto sale en el siguiente ciclo.
+- **Una conexión HTTP por fix en persecución**: fixes cada 2–3 s abrían un envío
+  individual. Ahora hay coalescing de 2,5 s: nada se pierde, se agrupa.
 
 ---
 
