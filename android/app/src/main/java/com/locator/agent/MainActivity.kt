@@ -17,6 +17,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -43,6 +44,18 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var settings: SettingsRepository
     private lateinit var pins: PinStore
+
+    /** Aplica el tema elegido (sistema/claro/oscuro) ANTES de inflar la vista. */
+    private fun applySavedTheme() {
+        val mode = settings.themeMode
+        if (mode == 1) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        } else if (mode == 2) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
+    }
 
     private lateinit var statusText: TextView
     private lateinit var securityText: TextView
@@ -97,6 +110,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         settings = SettingsRepository.get(this)
         pins = PinStore.get(this)
+        applySavedTheme()
         setContentView(R.layout.activity_main)
 
         statusText = findViewById(R.id.statusText)
@@ -144,6 +158,20 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Aviso enviado: llegué bien", Toast.LENGTH_SHORT).show()
         }
         btnSos.setOnClickListener { confirmSos() }
+
+        // Apariencia: sistema / claro / oscuro, persistido en los ajustes
+        findViewById<Button>(R.id.btnThemeSystem).setOnClickListener {
+            settings.themeMode = 0
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
+        findViewById<Button>(R.id.btnThemeLight).setOnClickListener {
+            settings.themeMode = 1
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        }
+        findViewById<Button>(R.id.btnThemeDark).setOnClickListener {
+            settings.themeMode = 2
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        }
 
         observeState()
         handleIntent(intent)
