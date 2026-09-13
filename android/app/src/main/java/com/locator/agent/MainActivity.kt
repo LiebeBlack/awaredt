@@ -57,6 +57,28 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** Marca el chip del tema activo para que se vea cual esta seleccionado. */
+    private fun updateThemeButtons() {
+        val mode = settings.themeMode
+        val active = when (mode) {
+            1 -> R.id.btnThemeLight
+            2 -> R.id.btnThemeDark
+            else -> R.id.btnThemeSystem
+        }
+        listOf(R.id.btnThemeSystem, R.id.btnThemeLight, R.id.btnThemeDark).forEach { id ->
+            val b = findViewById<Button>(id)
+            val base = getString(
+                when (id) {
+                    R.id.btnThemeSystem -> R.string.theme_system
+                    R.id.btnThemeLight -> R.string.theme_light
+                    else -> R.string.theme_dark
+                }
+            )
+            b.text = if (id == active) "\u2713 $base" else base
+            b.alpha = if (id == active) 1f else 0.6f
+        }
+    }
+
     private lateinit var statusText: TextView
     private lateinit var securityText: TextView
     private lateinit var btnToggle: Button
@@ -163,15 +185,19 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnThemeSystem).setOnClickListener {
             settings.themeMode = 0
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+            updateThemeButtons()
         }
         findViewById<Button>(R.id.btnThemeLight).setOnClickListener {
             settings.themeMode = 1
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            updateThemeButtons()
         }
         findViewById<Button>(R.id.btnThemeDark).setOnClickListener {
             settings.themeMode = 2
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            updateThemeButtons()
         }
+        updateThemeButtons()
 
         observeState()
         handleIntent(intent)
