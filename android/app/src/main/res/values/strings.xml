@@ -2,6 +2,38 @@
 <resources>
     <string name="app_name">Location Agent</string>
 
+    <!-- Interfaz principal (rediseño premium) -->
+    <string name="hero_title">📍 Location Agent</string>
+    <string name="hero_subtitle">Rastreo familiar con consentimiento</string>
+    <string name="label_status">Estado</string>
+    <string name="section_pairing">Emparejamiento (Supabase)</string>
+    <string name="section_behavior">Comportamiento</string>
+    <string name="section_alerts">Avisos desde este teléfono</string>
+    <string name="section_security">Seguridad y control</string>
+    <string name="section_appearance">Apariencia</string>
+    <string name="field_url_hint">URL Supabase (https://xxxx.supabase.co)</string>
+    <string name="field_key_hint">Clave anon public</string>
+    <string name="field_device_hint">UUID del dispositivo</string>
+    <string name="field_token_hint">Token de emparejamiento</string>
+    <string name="label_interval">Intervalo de reporte</string>
+    <string name="cb_precision">Precision+ (adjuntar celdas/WiFi)</string>
+    <string name="cb_adaptive">Batería adaptativa (ralentiza en ahorro)</string>
+    <string name="cb_discreet">Notificación discreta (mínima, siempre visible)</string>
+    <string name="cb_remote">Control remoto (ubicar, bloquear, alarma, detener)</string>
+    <string name="cb_share_apps">Compartir la lista de apps instaladas (solo nombres, sin uso ni horarios)</string>
+    <string name="cb_smart">Rastreo inteligente (no gasta GPS si está quieto)</string>
+    <string name="btn_save">Guardar configuración</string>
+    <string name="btn_battery">Optimizar batería (exención)</string>
+    <string name="btn_pin">Definir / cambiar PIN del propietario</string>
+    <string name="btn_anti_theft_on">Activar modo antirrobo (bloqueo remoto)</string>
+    <string name="btn_anti_theft_off">Desactivar modo antirrobo</string>
+    <string name="btn_unpair">Detener y desvincular dispositivo</string>
+    <string name="theme_label">Tema de la aplicación</string>
+    <string name="theme_system">Sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="footer_note">El rastreo funciona solo con tu consentimiento. La notificación permanente es un requisito de Android y el botón Detener siempre está disponible: con PIN definido, pide el PIN para evitar que un tercero apague el rastreo.</string>
+
     <string name="notif_channel_tracking">Seguimiento de ubicación</string>
     <string name="notif_channel_tracking_min">Seguimiento de ubicación (discreto)</string>
     <string name="notif_tracking_title">Seguimiento activo</string>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Superficies (modo oscuro): azul noche profundo, sin negro puro -->
+    <color name="bg">#0B0E1A</color>
+    <color name="bg_gradient_end">#10142A</color>
+    <color name="surface">#151936</color>
+    <color name="surface_alt">#1C2140</color>
+    <color name="card_stroke">#262C52</color>
+
+    <!-- Texto -->
+    <color name="text_primary">#EAECF5</color>
+    <color name="text_secondary">#9AA1B9</color>
+
+    <!-- Marca: en oscuro el indigo se aclara para mantener contraste -->
+    <color name="primary">#818CF8</color>
+    <color name="primary_dark">#0B0E1A</color>
+    <color name="primary_container">#312E81</color>
+    <color name="on_primary_container">#E0E7FF</color>
+
+    <!-- Semánticos -->
+    <color name="accent_green">#4ADE80</color>
+    <color name="accent_green_container">#14532D</color>
+    <color name="accent_red">#F87171</color>
+    <color name="accent_red_container">#7F1D1D</color>
+    <color name="accent_amber">#FBBF24</color>
+
+    <color name="hero_start">#4338CA</color>
+    <color name="hero_end">#1E1B4B</color>
+</resources>

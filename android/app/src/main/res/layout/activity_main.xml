@@ -2,181 +2,349 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="@color/bg">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingHorizontal="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="32dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:textSize="22sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/statusText"
+        <!-- ============================= HERO ============================= -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Detenido"
-            android:textSize="14sp" />
+            android:background="@drawable/bg_hero"
+            android:orientation="vertical"
+            android:padding="20dp">
 
-        <Button
-            android:id="@+id/btnToggle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Iniciar rastreo" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/hero_title"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold" />
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/hero_subtitle"
+                android:textColor="#C7D2FE"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="@string/label_status"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:textColor="#A5B4FC"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:lineSpacingExtra="3dp"
+                android:text="Detenido"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btnToggle"
+                style="@style/Btn.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Iniciar rastreo" />
+        </LinearLayout>
+
+        <!-- Boton de sistema: exencion de bateria -->
         <Button
             android:id="@+id/btnBattery"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Optimizar batería (exención)" />
-
-        <!-- ================= Emparejamiento ================= -->
-        <TextView style="@style/SectionTitle" android:text="Emparejamiento (Supabase)" />
-
-        <EditText
-            android:id="@+id/etSupabaseUrl"
-            style="@style/Field" android:hint="URL Supabase (https://xxxx.supabase.co)"
-            android:inputType="textUri" />
-
-        <EditText
-            android:id="@+id/etSupabaseKey"
-            style="@style/Field" android:hint="Clave anon public"
-            android:inputType="text" />
-
-        <EditText
-            android:id="@+id/etDeviceId"
-            style="@style/Field" android:hint="UUID del dispositivo"
-            android:inputType="text" />
-
-        <EditText
-            android:id="@+id/etDeviceToken"
-            style="@style/Field" android:hint="Token de emparejamiento"
-            android:inputType="text" />
-
-        <!-- ================= Comportamiento ================= -->
-        <TextView style="@style/SectionTitle" android:text="Comportamiento" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Intervalo de reporte" />
-
-        <Spinner
-            android:id="@+id/spInterval"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <CheckBox
-            android:id="@+id/cbPrecision"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Precision+ (adjuntar celdas/WiFi)" />
-
-        <CheckBox
-            android:id="@+id/cbAdaptive"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="Batería adaptativa (ralentiza en ahorro)" />
-
-        <CheckBox
-            android:id="@+id/cbDiscreet"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Notificación discreta (mínima, siempre visible)" />
-
-        <Button
-            android:id="@+id/btnSave"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Guardar configuración" />
-
-        <!-- ================= Avisos desde este teléfono ================= -->
-        <TextView style="@style/SectionTitle" android:text="Avisos desde este teléfono" />
-
-        <Button
-            android:id="@+id/btnSos"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:backgroundTint="#B91C1C"
-            android:text="@string/sos_button" />
-
-        <Button
-            android:id="@+id/btnCheckin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/checkin_button" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:text="@string/sos_hint"
-            android:textColor="#8899A6" />
-
-        <!-- ================= Seguridad y control ================= -->
-        <TextView style="@style/SectionTitle" android:text="Seguridad y control" />
-
-        <TextView
-            android:id="@+id/securityText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="13sp"
-            android:text="—" />
-
-        <Button
-            android:id="@+id/btnPin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Definir / cambiar PIN del propietario" />
-
-        <CheckBox
-            android:id="@+id/cbRemote"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="Control remoto (ubicar, bloquear, alarma, detener)" />
-
-        <CheckBox
-            android:id="@+id/cbShareApps"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="Compartir la lista de apps instaladas (solo nombres, sin uso ni horarios)" />
-
-        <CheckBox
-            android:id="@+id/cbSmart"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="Rastreo inteligente (no gasta GPS si está quieto)" />
-
-        <Button
-            android:id="@+id/btnAntiTheft"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Activar modo antirrobo (bloqueo remoto)" />
-
-        <Button
-            android:id="@+id/btnUnpair"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Detener y desvincular dispositivo" />
-
-        <TextView
+            style="@style/Btn.Secondary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:textSize="12sp"
-            android:text="El rastreo funciona solo con tu consentimiento. La notificación permanente es un requisito de Android y el botón Detener siempre está disponible: con PIN definido, pide el PIN para evitar que un tercero apague el rastreo."
-            android:textColor="#8899A6" />
+            android:text="@string/btn_battery" />
+
+        <!-- ===================== EMPAREJAMIENTO ===================== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView style="@style/SectionTitle" android:text="@string/section_pairing" />
+
+            <EditText
+                android:id="@+id/etSupabaseUrl"
+                style="@style/Field"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/field_url_hint"
+                android:inputType="textUri" />
+
+            <EditText
+                android:id="@+id/etSupabaseKey"
+                style="@style/Field"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/field_key_hint"
+                android:inputType="text" />
+
+            <EditText
+                android:id="@+id/etDeviceId"
+                style="@style/Field"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/field_device_hint"
+                android:inputType="text" />
+
+            <EditText
+                android:id="@+id/etDeviceToken"
+                style="@style/Field"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/field_token_hint"
+                android:inputType="text" />
+        </LinearLayout>
+
+        <!-- ===================== COMPORTAMIENTO ===================== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView style="@style/SectionTitle" android:text="@string/section_behavior" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_interval"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <Spinner
+                android:id="@+id/spInterval"
+                android:layout_width="match_parent"
+                android:layout_height="48dp" />
+
+            <CheckBox
+                android:id="@+id/cbPrecision"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/cb_precision"
+                android:textColor="@color/text_primary" />
+
+            <CheckBox
+                android:id="@+id/cbAdaptive"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:checked="true"
+                android:text="@string/cb_adaptive"
+                android:textColor="@color/text_primary" />
+
+            <CheckBox
+                android:id="@+id/cbDiscreet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:checked="true"
+                android:text="@string/cb_discreet"
+                android:textColor="@color/text_primary" />
+
+            <Button
+                android:id="@+id/btnSave"
+                style="@style/Btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_save" />
+        </LinearLayout>
+
+        <!-- ================= AVISOS DESDE ESTE TELEFONO ================= -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView style="@style/SectionTitle" android:text="@string/section_alerts" />
+
+            <Button
+                android:id="@+id/btnSos"
+                style="@style/Btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/accent_red"
+                android:text="@string/sos_button" />
+
+            <Button
+                android:id="@+id/btnCheckin"
+                style="@style/Btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/checkin_button" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/sos_hint"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- ================= SEGURIDAD Y CONTROL ================= -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView style="@style/SectionTitle" android:text="@string/section_security" />
+
+            <TextView
+                android:id="@+id/securityText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="3dp"
+                android:text="—"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btnPin"
+                style="@style/Btn.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_pin" />
+
+            <CheckBox
+                android:id="@+id/cbRemote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:checked="true"
+                android:text="@string/cb_remote"
+                android:textColor="@color/text_primary" />
+
+            <CheckBox
+                android:id="@+id/cbShareApps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:checked="true"
+                android:text="@string/cb_share_apps"
+                android:textColor="@color/text_primary" />
+
+            <CheckBox
+                android:id="@+id/cbSmart"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:checked="true"
+                android:text="@string/cb_smart"
+                android:textColor="@color/text_primary" />
+
+            <Button
+                android:id="@+id/btnAntiTheft"
+                style="@style/Btn.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_anti_theft_on" />
+
+            <Button
+                android:id="@+id/btnUnpair"
+                style="@style/Btn.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_unpair" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/footer_note"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- ===================== APARIENCIA (tema) ===================== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView style="@style/SectionTitle" android:text="@string/section_appearance" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/theme_label"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnThemeSystem"
+                    style="@style/ThemeChip"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="@string/theme_system" />
+
+                <Button
+                    android:id="@+id/btnThemeLight"
+                    style="@style/ThemeChip"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="@string/theme_light" />
+
+                <Button
+                    android:id="@+id/btnThemeDark"
+                    style="@style/ThemeChip"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="@string/theme_dark" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/theme_note"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>

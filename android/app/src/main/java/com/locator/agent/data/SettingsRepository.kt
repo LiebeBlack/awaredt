@@ -69,6 +69,13 @@ class SettingsRepository(context: Context) {
         set(v) = prefs.edit().putBoolean(KEY_DISCREET_NOTIF, v).apply()
 
     /**
+     * Tema de la interfaz: 0 = sistema (DayNight), 1 = claro, 2 = oscuro.
+     * Se aplica en onCreate ANTES de setContentView y sobrevive al reinicio.
+     */
+    var themeMode: Int
+        get() = prefs.getInt(KEY_THEME_MODE, 0)
+        set(v) = prefs.edit().putInt(KEY_THEME_MODE, v.coerceIn(0, 2)).apply()
+    /**
      * El dueño activo el modo antirrobo (DeviceAdmin). Sirve para DETECTAR que
      * alguien lo ha desactivado despues: el hecho de que pase de true a false
      * es la senal de manipulacion mas fiable que existe en Android.
@@ -180,6 +187,7 @@ class SettingsRepository(context: Context) {
         const val KEY_PRECISION_PLUS = "precision_plus"
         const val KEY_ADAPTIVE_BATTERY = "adaptive_battery"
         const val KEY_DISCREET_NOTIF = "discreet_notif"
+        const val KEY_THEME_MODE = "theme_mode"
         const val KEY_ANTI_THEFT = "anti_theft_enabled"
         const val KEY_SHARE_APP_LIST = "share_app_list"
         const val KEY_REMOTE_CONTROL = "remote_control"
