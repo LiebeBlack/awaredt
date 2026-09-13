@@ -15,6 +15,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # publica el release «latest»
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -30,14 +32,14 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      # ---- Version: cada build es incrementa y trazable (no siempre "1.0.0") ----
+      # ---- Version: cada build es trazable y el codigo es monotono ----
+      # run_number se incrementa en cada ejecucion del workflow: nunca se repite,
+      # asi que Android siempre ve una version igual o superior a la instalada.
       - name: Compute version
         id: ver
         run: |
-          CODE=$(cat android/app/ci-version-code 2>/dev/null || echo 0)
-          CODE=$((CODE + 1))
+          CODE="${{ github.run_number }}"
           NAME="$(date -u +%Y.%-m.%-d)-$CODE"
-          echo "$CODE" > android/app/ci-version-code
           echo "code=$CODE" >> "$GITHUB_OUTPUT"
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
           echo "Version: $NAME ($CODE)"
@@ -107,8 +109,18 @@ jobs:
 
       # ---- Publicacion continua: cada push a main actualiza el release "latest" ----
       # En pull requests NO se publica (solo se compila y sube el artefacto).
+      # Se borra el release/tag "latest" anterior para que el nuevo apunte a
+      # ESTE commit (si no, el tag seguiria al primero que lo creo).
+      - name: Refresh latest release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete latest --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
+          git push origin :refs/tags/latest || true
+
       - name: Publish continuous release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
