@@ -48,7 +48,13 @@ class SyncManager private constructor(context: Context) {
             runCatching { db.locationDao().insert(entity) }
                 .onFailure { Log.e(TAG, "No se pudo persistir el fix", it) }
             updatePendingCount()
-            flushNow(force = urgent)
+            // Coalescing: en persecucion llegan fixes cada 2-3 s, mas rapido de
+            // lo que conviene abrir una conexion. Si el ultimo intento de envio
+            // es muy reciente, el siguiente fix (o el watcher de red) vacia el
+            // buffer igualmente: nada se pierde, se agrupa.
+            if (urgent || System.currentTimeMillis() - lastAttemptAt >= COALESCE_MS) {
+                flushNow(force = urgent)
+            }
         }
     }
 
@@ -78,12 +84,18 @@ class SyncManager private constructor(context: Context) {
         if (!settings.pairingComplete) return 0
         if (!force && battery.isLowPower()) return 0   // en ahorro, deja los lotes para WorkManager/carga
 
-        // Backoff exponencial tras fallos consecutivos: 10s, 20s, 40s... max 10 min
-        val backoffMs = if (failCount == 0) 0L else minOf(10_000L shl (failCount - 1).coerceAtMost(6), 600_000L)
-        val since = System.currentTimeMillis() - lastAttemptAt
-        if (since in 0 until backoffMs) return 0
+        // Backoff exponencial tras fallos consecutivos: 10s, 20s, 40s... max 10 min.
+        // Solo para los vaciados AUTOMATICOS: uno pedido a proposito (worker de
+        // 15 min, comando remoto flush, "ubicar ahora") no debe quedar mudo por
+        // el throttling ni responder "0 enviadas" sin motivo.
+        if (!force) {
+            val backoffMs = if (failCount == 0) 0L else minOf(10_000L shl (failCount - 1).coerceAtMost(6), 600_000L)
+            val since = System.currentTimeMillis() - lastAttemptAt
+            if (since in 0 until backoffMs) return 0
+        }
 
         var sentTotal = 0
+        var batches = 0
         try {
             while (true) {
                 val pending = db.locationDao().pending(BATCH)
@@ -92,6 +104,10 @@ class SyncManager private constructor(context: Context) {
                 api.sendBatch(fixes)
                 db.locationDao().markSent(pending.map { it.id })
                 sentTotal += fixes.size
+                // Tope por vaciado: tras un dia sin red no se sostiene el mutex
+                // (y la conexion) hasta vaciar miles de fixes; el resto sale en el
+                // siguiente ciclo del servicio o del worker.
+                if (++batches >= MAX_BATCHES_PER_FLUSH) break
                 if (pending.size < BATCH) break
             }
             if (sentTotal > 0) {
@@ -140,6 +156,8 @@ class SyncManager private constructor(context: Context) {
         private const val TAG = "SyncManager"
         private const val BATCH = 20
         private const val RETENTION_MS = 24 * 60 * 60 * 1000L
+        private const val MAX_BATCHES_PER_FLUSH = 25   // 25 x 20 = 500 fixes por vaciado
+        private const val COALESCE_MS = 2500L
 
         @Volatile private var instance: SyncManager? = null
 

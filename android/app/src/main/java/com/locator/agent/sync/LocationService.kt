@@ -75,6 +75,7 @@ class LocationService : LifecycleService() {
     private var lowMotionStreak = 0
     private var stationary = false
     private var lastNotifText: String? = null
+    private var lastHealthReportAt = 0L
 
     private val callback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -427,8 +428,14 @@ class LocationService : LifecycleService() {
                 // refresca la notificacion si cambio el texto.
                 applyLocationRequest()
                 refreshForegroundNotification()
-                // Vigila que sigan en pie permisos/antirrobo y lo reporta
-                TamperCheck.report(this@LocationService)
+                // Vigila que sigan en pie permisos/antirrobo y lo reporta, con
+                // tope de frecuencia: subirlo CADA ciclo (60 s) significa 1.440
+                // informes al dia con analisis de postura y lista de apps.
+                val nowMs = System.currentTimeMillis()
+                if (nowMs - lastHealthReportAt >= HEALTH_REPORT_MS) {
+                    lastHealthReportAt = nowMs
+                    TamperCheck.report(this@LocationService)
+                }
                 delay(commandPollDelaySec() * 1000L)
             }
         }
@@ -461,6 +468,7 @@ class LocationService : LifecycleService() {
         private const val NOTIF_ID = 1001
         private const val STATIONARY_STREAK = 3
         private const val BURST_POLL_SEC = 15L
+        private const val HEALTH_REPORT_MS = 10 * 60 * 1000L
         private const val PI_FLAGS =
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 
