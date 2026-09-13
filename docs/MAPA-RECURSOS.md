@@ -75,15 +75,20 @@ Ruta base: `android/app/src/main/java/com/locator/agent/`
 | `sync/TamperWorker.kt` | Revisión de estado cada 6 h (despierta el proceso aunque el servicio esté muerto) | sí |
 | `sync/WatchdogReceiver.kt` | Valla cada 15 min: relanza el servicio si el rastreo está activo | — |
 
-### 2.2 Recursos Android (7)
+### 2.2 Recursos Android (12)
 
 | Archivo | Contenido |
 |---|---|
-| `res/layout/activity_main.xml` | Pantalla única (ajustes, botones, interruptores) |
-| `res/values/strings.xml` | 23 textos y nombres de canal |
-| `res/values/colors.xml` | Paleta del agente |
-| `res/values/styles.xml` | Estilos base de la pantalla |
-| `res/values/themes.xml` | Tema de la aplicación |
+| `res/layout/activity_main.xml` | Pantalla única premium: hero con estado, tarjetas por sección, selector de tema |
+| `res/values/strings.xml` | 57 textos y nombres de canal |
+| `res/values/colors.xml` | Paleta clara del agente |
+| `res/values-night/colors.xml` | Paleta oscura (modo noche automático) |
+| `res/values/themes.xml` | Tema Material 3 con la paleta mapeada |
+| `res/values-night/themes.xml` | Ajuste del tema en modo noche (barra de estado) |
+| `res/values/styles.xml` | Estilos: secciones, campos, botones, chips de tema |
+| `res/drawable/bg_card.xml` | Fondo de tarjeta redondeada |
+| `res/drawable/bg_field.xml` | Fondo redondeado de los campos de texto |
+| `res/drawable/bg_hero.xml` | Degradado índigo de la cabecera |
 | `res/drawable/ic_launcher_foreground.xml` | Icono **visible** en el lanzador |
 | `res/xml/device_admin.xml` | Política de DeviceAdmin: solo `force-lock` |
 
@@ -210,13 +215,13 @@ cada dispositivo, y borrar el historial de un dispositivo (`purge`) desde los co
 
 ## 7. Ajustes
 
-### 7.1 Agente (21 claves cifradas, `SettingsRepository`)
+### 7.1 Agente (22 claves cifradas, `SettingsRepository`)
 
 `tracking_enabled`, `device_id`, `device_token`, `supabase_url`, `supabase_anon_key`, `interval_sec`,
-`interval_slow_sec`, `precision_plus`, `adaptive_battery`, `discreet_notif`, `anti_theft_enabled`,
-`share_app_list`, `remote_control`, `command_poll_sec`, `smart_tracking`, `stationary_radius_m`,
-`stationary_keepalive_sec`, `consent_accepted_at`, `consent_version`, `burst_until_ms`,
-`burst_interval_sec`.
+`interval_slow_sec`, `precision_plus`, `adaptive_battery`, `discreet_notif`, `theme_mode`,
+`anti_theft_enabled`, `share_app_list`, `remote_control`, `command_poll_sec`, `smart_tracking`,
+`stationary_radius_m`, `stationary_keepalive_sec`, `consent_accepted_at`, `consent_version`,
+`burst_until_ms`, `burst_interval_sec`.
 
 Límites duros: intervalo normal 5–300 s, intervalo lento 15–900 s, radio de quieto 5–500 m, keep-alive
 60–3600 s, sondeo de comandos 15–900 s, persecución 2 s–15 s de muestreo y **30 min** de tope.
