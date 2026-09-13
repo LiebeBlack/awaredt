@@ -24,6 +24,10 @@
     <color name="accent_red_container">#FEE2E2</color>
     <color name="accent_amber">#D97706</color>
 
+    <!-- Estado de emparejamiento -->
+    <color name="status_ok_text">#15803D</color>
+    <color name="status_warn_container">#FEF3C7</color>
+
     <!-- Compatibilidad con el tema anterior -->
     <color name="hero_start">#5B54F0</color>
     <color name="hero_end">#3730A3</color>

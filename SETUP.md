@@ -114,9 +114,9 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
 3.A.2 [ ] Ir a **Actions → Android CI** → esperar el ✅ (JDK 17 + Gradle 8.9,
       `assembleDebug` + `lintDebug`).
 3.A.3 [ ] Descargar el APK publicado: **Releases → «Última compilación»**
-      (`locator-agent-<versión>.apk`, firmado), o el artifact
-      **`locator-agent-apk`** de la pestaña **Actions**
-      (abajo de la ejecución del workflow) → contiene `app-debug.apk`.
+      (`locator-agent-<versión>.apk`, firmado con release+R8: el recomendado), o el
+      artifact **`locator-agent-apk`** de la pestaña **Actions**
+      (abajo de la ejecución del workflow) → contiene el release firmado y `app-debug.apk`.
 3.A.4 [ ] Pasar el APK al teléfono e instalarlo
       (aceptar "instalar de fuentes desconocidas" la primera vez).
 
@@ -134,15 +134,22 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
 
 4.1. [ ] Abrir la app **Location Agent** (icono visible en el lanzador).
 
-4.2. [ ] Sección **Emparejamiento (Supabase)** — completar los 4 campos:
+4.2. [ ] **Emparejar en el panel** (si aún no lo hiciste): `admin.html → Dispositivos →
+      ➕ Emparejar / rotar token`, con etiqueta y token de 16+ caracteres. El panel muestra
+      el **UUID y el token**: copia ese mensaje y en el teléfono pulsa **Emparejamiento →
+      Pegar credenciales** — reconoce solos URL, clave anon, UUID y token (también acepta
+      los 4 datos pegados línea a línea). Si la URL pegada es de otro proyecto, la app
+      lo confirma antes de pisar.
+
+4.3. [ ] Los 4 campos (los rellena «Pegar credenciales»; también a mano):
      | Campo de la app | Valor | Origen |
      |---|---|---|
      | URL Supabase | `https://abcdxyz.supabase.co` | paso 1.4 |
      | Clave anon public | `eyJhbGci...` | paso 1.4 |
-     | UUID del dispositivo | `xxxxxxxx-xxxx-...` | devuelto por `pair_device` (paso 1.3) |
-     | Token de emparejamiento | tu token en claro | el que pusiste en 1.3 |
+     | UUID del dispositivo | `xxxxxxxx-xxxx-...` | devuelto por `pair_device` (pasos 1.3 / 4.2) |
+     | Token de emparejamiento | tu token en claro | el que pusiste en 1.3 / 4.2 |
 
-4.3. [ ] Ajustes de **Comportamiento** (opcionales, hay defaults sanos):
+4.4. [ ] Ajustes de **Comportamiento** (opcionales, hay defaults sanos):
      - Intervalo de reporte: **5 s** (tiempo real) / 10 / 30 / 60 / 300 s.
      - **Precisión+**: adjunta metadatos de celdas/WiFi a cada fix (auditoría).
      - **Batería adaptativa**: bajo 20 % sin cargador ralentiza solo (recomendado ON).
@@ -150,31 +157,36 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
      - **Control remoto**: acepta comandos del panel (ubicar, bloquear, alarma, detener).
      - **Rastreo inteligente**: si no te mueves, no gasta GPS; manda un "sigo vivo" cada 5 min.
 
-4.4. [ ] Pulsar **Guardar configuración** (toast "Configuración guardada").
+4.5. [ ] Pulsar **Guardar configuración** (toast "Configuración guardada"): la línea de
+      estado bajo los campos debe quedar en verde **Emparejado ✓**, o decir qué falta.
 
-4.5. [ ] Pulsar **Iniciar rastreo** y conceder permisos cuando el sistema pregunte:
+4.6. [ ] Pulsar **Iniciar rastreo** y conceder permisos cuando el sistema pregunte:
      - [ ] **Ubicación** (mientras se usa)
      - [ ] **"Permitir todo el tiempo"** (imprescindible para reportar con pantalla apagada;
            la app abre el diálogo para llevarte a Ajustes)
      - [ ] **Notificaciones** (Android 13+; necesaria para la notificación del servicio)
 
-4.6. [ ] Pulsar **Optimizar batería (exención)** y aceptar el diálogo oficial del
+4.7. [ ] Pulsar **Optimizar batería (exención)** y aceptar el diálogo oficial del
       sistema → evita que el fabricante mate el servicio.
 
-4.7. [ ] (Recomendado) **Seguridad y control → Definir PIN del propietario** (4-8 dígitos).
+4.8. [ ] (Recomendado) **Seguridad y control → Definir PIN del propietario** (4-8 dígitos).
       A partir de ahí, detener el rastreo, cambiar la configuración, desactivar el modo
       antirrobo o desvincular pedirán ese PIN. No se puede recuperar: apúntalo.
 
-4.8. [ ] (Opcional, teléfono **tuyo**) **Activar modo antirrobo**: abre el diálogo oficial de
+4.9. [ ] (Opcional, teléfono **tuyo**) **Activar modo antirrobo**: abre el diálogo oficial de
       Android y acepta. Sirve para bloquear la pantalla en remoto desde el panel y hace que
       Android exija desactivar la protección antes de desinstalar la app. No oculta nada:
       el icono y la notificación siguen visibles y no hay borrado remoto.
 
-4.9. [ ] (Opcional) **Detener y desvincular dispositivo**: pide el PIN, para el rastreo,
+4.10. [ ] **Puesta a punto** (tarjeta en la app): revisa la lista ✓/✗ — ubicación, segundo
+      plano, notificaciones, batería, PIN y antirrobo — y pulsa **Corregir lo que falta**:
+      abre directamente el ajuste del primer pendiente.
+
+4.11. [ ] (Opcional) **Detener y desvincular dispositivo**: pide el PIN, para el rastreo,
       borra el buffer local y **invalida el token en el servidor** (elige si borras también
       el historial). Es la salida limpia: después, el teléfono ya no puede enviar nada.
 
-4.7. [ ] Confirmar en la barra de estado la notificación **"Seguimiento activo"**
+4.12. [ ] Confirmar en la barra de estado la notificación **"Seguimiento activo"**
       (con botón **Detener**). Esa notificación es la prueba visible de que corre.
 
 ---
@@ -356,11 +368,10 @@ node tools/simulate-agent.mjs \
 - Parar con `Ctrl+C`. Para borrar los datos de prueba:
   `delete from positions where device_id = 'UUID';` (SQL Editor).
 
-**Releases firmados:** al crear un tag (`git tag v1.0.0 && git push --tags`) el workflow
-`release.yml` compila `assembleRelease` y adjunta el APK a un GitHub Release.
-(Sin keystore genera `app-release-unsigned.apk`; para firmar, añade los secrets
-`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` y un paso de
-signing — pídelo y lo agregamos.)
+**Releases:** cada push a `main` compila, **firma** y publica el APK en el release
+**«Última compilación»** (workflow *Android CI*); los tags `v1.x` publican el release
+estable con la misma clave. Configuración de la firma, secretos y avisos en
+[`RELEASE.md`](RELEASE.md).
 
 ---
 

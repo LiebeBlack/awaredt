@@ -643,7 +643,14 @@
       .then(function (r) {
         if (r.error) { alert('Error: ' + r.error.message); return; }
         els.pairLabel.value = ''; els.pairToken.value = '';
-        alert('Dispositivo emparejado.\n\nUUID: ' + r.data + '\n\nPega este UUID y el token en la app Android (Ajustes → Emparejamiento).');
+        var cfg = window.LOCATOR_CONFIG || {};
+        var datos = [
+          'URL: ' + (cfg.supabaseUrl || ''),
+          'CLAVE: ' + (cfg.supabaseAnonKey || ''),
+          'UUID: ' + r.data,
+          'TOKEN: ' + token
+        ].join('\n');
+        alert('Dispositivo emparejado.\n\nCopia este mensaje completo:\n\n' + datos + '\n\n…y usa «Pegar credenciales» en la app Android (Emparejamiento): rellena los 4 campos sola.');
         loadDevices();
       })
       .catch(function (e) { alert('Error de red al emparejar: ' + (e.message || e)); });

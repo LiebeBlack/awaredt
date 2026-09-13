@@ -12,6 +12,24 @@ hay que reejecutarlo.
 
 Si el panel dice *«Reejecuta supabase-setup.sql: falta …»* es exactamente eso: falta el paso 1.
 
+## v1.5 — Configuración sin tecleo y puesta a punto dentro de la app
+
+- **«Pegar credenciales»** (Emparejamiento): pega el mensaje del panel (UUID+token)
+  o los 4 datos y la app clasifica solos URL, clave anon, UUID y token — también
+  acepta formato `clave: valor` y JSON. Si la URL pegada es de otro proyecto, lo
+  confirma antes de pisar. El panel ahora sugiere copiar el mensaje al emparejar.
+- **Estado de emparejamiento visible**: píldora verde «Emparejado ✓ — Listo para
+  rastrear» o ámbar «Falta: …» con lo que falta, bajo los 4 campos.
+- **Tarjeta «Puesta a punto»**: lista ✓/✗ con permiso de ubicación, segundo plano,
+  notificaciones (13+), exención de batería, PIN y modo antirrobo; el botón
+  **Corregir lo que falta** abre directamente el ajuste del primer pendiente.
+- **ViewBinding activado**: los ids de la interfaz se resuelven en compilación;
+  un id que falte o mal tipado ya no puede llegar a producción.
+- **Limpieza**: fuera las 9 strings `pref_*` sin uso (verificado contra el código).
+  57 → 61 textos, 12 → 14 recursos.
+- **SETUP.md renumerado** (§4 tenía dos pasos 4.7) y su §9 corregido: describía
+  releases sin firmar y manuales de la era anterior a v1.4.
+
 ## v1.4 — Publicación continua del APK (cada push)
 
 - **`android.yml` compila, firma y PUBLICA** el APK en el release **«Última compilación»**

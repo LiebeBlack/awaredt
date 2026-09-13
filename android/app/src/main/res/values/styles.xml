@@ -46,6 +46,18 @@
         <item name="android:textAllCaps">false</item>
     </style>
 
+    <!-- Linea de estado (emparejamiento): pillora redondeada -->
+    <style name="StatusLine">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">10dp</item>
+        <item name="android:paddingHorizontal">12dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
     <!-- Chip-like para la fila de seleccion de tema -->
     <style name="ThemeChip" parent="Widget.Material3.Button.OutlinedButton">
         <item name="android:layout_width">0dp</item>

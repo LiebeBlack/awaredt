@@ -75,20 +75,22 @@ Ruta base: `android/app/src/main/java/com/locator/agent/`
 | `sync/TamperWorker.kt` | Revisión de estado cada 6 h (despierta el proceso aunque el servicio esté muerto) | sí |
 | `sync/WatchdogReceiver.kt` | Valla cada 15 min: relanza el servicio si el rastreo está activo | — |
 
-### 2.2 Recursos Android (12)
+### 2.2 Recursos Android (14)
 
 | Archivo | Contenido |
 |---|---|
-| `res/layout/activity_main.xml` | Pantalla única premium: hero con estado, tarjetas por sección, selector de tema |
-| `res/values/strings.xml` | 57 textos y nombres de canal |
+| `res/layout/activity_main.xml` | Pantalla única premium: hero con estado, tarjetas por sección, checklist de puesta a punto, selector de tema |
+| `res/values/strings.xml` | 63 textos y nombres de canal |
 | `res/values/colors.xml` | Paleta clara del agente |
 | `res/values-night/colors.xml` | Paleta oscura (modo noche automático) |
 | `res/values/themes.xml` | Tema Material 3 con la paleta mapeada |
 | `res/values-night/themes.xml` | Ajuste del tema en modo noche (barra de estado) |
-| `res/values/styles.xml` | Estilos: secciones, campos, botones, chips de tema |
+| `res/values/styles.xml` | Estilos: secciones, campos, botones, chips de tema, línea de estado |
 | `res/drawable/bg_card.xml` | Fondo de tarjeta redondeada |
 | `res/drawable/bg_field.xml` | Fondo redondeado de los campos de texto |
 | `res/drawable/bg_hero.xml` | Degradado índigo de la cabecera |
+| `res/drawable/bg_status_ok.xml` | Píldora verde del estado «Emparejado ✓» |
+| `res/drawable/bg_status_warn.xml` | Píldora ámbar del estado «Falta: …» |
 | `res/drawable/ic_launcher_foreground.xml` | Icono **visible** en el lanzador |
 | `res/xml/device_admin.xml` | Política de DeviceAdmin: solo `force-lock` |
 

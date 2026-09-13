@@ -2,6 +2,8 @@ package com.locator.agent
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -12,9 +14,6 @@ import android.provider.Settings
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.Spinner
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
@@ -25,6 +24,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.locator.agent.admin.DeviceAdmin
 import com.locator.agent.data.AppDatabase
 import com.locator.agent.data.SettingsRepository
+import com.locator.agent.databinding.ActivityMainBinding
 import com.locator.agent.security.PinPrompt
 import com.locator.agent.security.PinStore
 import com.locator.agent.sync.AppVisibility
@@ -32,10 +32,10 @@ import com.locator.agent.sync.EventReporter
 import com.locator.agent.sync.LocationService
 import com.locator.agent.sync.ServiceStateHolder
 import com.locator.agent.sync.SupabaseClient
-import com.locator.agent.sync.SyncManager
 import com.locator.agent.sync.SyncWorker
 import com.locator.agent.sync.TamperCheck
 import com.locator.agent.sync.WatchdogReceiver
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -44,29 +44,43 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var settings: SettingsRepository
     private lateinit var pins: PinStore
+    private lateinit var b: ActivityMainBinding
+
+    private val intervalOptions = listOf(5, 10, 30, 60, 300)
+    private var waitingForPermissions = false
+
+    /** Accesos directos a las casillas de Comportamiento y Seguridad. */
+    private inner class Cb(val view: CheckBox, val save: (Boolean) -> Unit, val load: () -> Boolean)
+
+    private val cbs: List<Cb> by lazy {
+        listOf(
+            Cb(b.cbPrecision, { settings.precisionPlus = it }, { settings.precisionPlus }),
+            Cb(b.cbAdaptive, { settings.adaptiveBattery = it }, { settings.adaptiveBattery }),
+            Cb(b.cbDiscreet, { settings.discreetNotif = it }, { settings.discreetNotif }),
+            Cb(b.cbRemote, { settings.remoteControl = it }, { settings.remoteControl }),
+            Cb(b.cbSmart, { settings.smartTracking = it }, { settings.smartTracking }),
+            Cb(b.cbShareApps, { settings.shareAppList = it }, { settings.shareAppList })
+        )
+    }
 
     /** Aplica el tema elegido (sistema/claro/oscuro) ANTES de inflar la vista. */
     private fun applySavedTheme() {
-        val mode = settings.themeMode
-        if (mode == 1) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-        } else if (mode == 2) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-        } else {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        when (settings.themeMode) {
+            1 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            2 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
     }
 
     /** Marca el chip del tema activo para que se vea cual esta seleccionado. */
     private fun updateThemeButtons() {
-        val mode = settings.themeMode
-        val active = when (mode) {
+        val active = when (settings.themeMode) {
             1 -> R.id.btnThemeLight
             2 -> R.id.btnThemeDark
             else -> R.id.btnThemeSystem
         }
         listOf(R.id.btnThemeSystem, R.id.btnThemeLight, R.id.btnThemeDark).forEach { id ->
-            val b = findViewById<Button>(id)
+            val btn = findViewById<Button>(id)
             val base = getString(
                 when (id) {
                     R.id.btnThemeSystem -> R.string.theme_system
@@ -74,34 +88,10 @@ class MainActivity : AppCompatActivity() {
                     else -> R.string.theme_dark
                 }
             )
-            b.text = if (id == active) "\u2713 $base" else base
-            b.alpha = if (id == active) 1f else 0.6f
+            btn.text = if (id == active) "\u2713 $base" else base
+            btn.alpha = if (id == active) 1f else 0.6f
         }
     }
-
-    private lateinit var statusText: TextView
-    private lateinit var securityText: TextView
-    private lateinit var btnToggle: Button
-    private lateinit var btnBattery: Button
-    private lateinit var btnPin: Button
-    private lateinit var btnAntiTheft: Button
-    private lateinit var btnUnpair: Button
-    private lateinit var btnSos: Button
-    private lateinit var btnCheckin: Button
-    private lateinit var etUrl: EditText
-    private lateinit var etKey: EditText
-    private lateinit var etDeviceId: EditText
-    private lateinit var etToken: EditText
-    private lateinit var spInterval: Spinner
-    private lateinit var cbPrecision: CheckBox
-    private lateinit var cbAdaptive: CheckBox
-    private lateinit var cbDiscreet: CheckBox
-    private lateinit var cbRemote: CheckBox
-    private lateinit var cbSmart: CheckBox
-    private lateinit var cbShareApps: CheckBox
-
-    private val intervalOptions = listOf(5, 10, 30, 60, 300)
-    private var waitingForPermissions = false
 
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
@@ -125,6 +115,7 @@ class MainActivity : AppCompatActivity() {
             // desactivado, es manipulacion y el panel lo vera con hora y motivo.
             settings.antiTheftEnabled = DeviceAdmin.isActive(this)
             refreshSecurity()
+            refreshSetup()
             reportHealth()
         }
 
@@ -133,30 +124,10 @@ class MainActivity : AppCompatActivity() {
         settings = SettingsRepository.get(this)
         pins = PinStore.get(this)
         applySavedTheme()
-        setContentView(R.layout.activity_main)
+        b = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(b.root)
 
-        statusText = findViewById(R.id.statusText)
-        securityText = findViewById(R.id.securityText)
-        btnToggle = findViewById(R.id.btnToggle)
-        btnBattery = findViewById(R.id.btnBattery)
-        btnPin = findViewById(R.id.btnPin)
-        btnAntiTheft = findViewById(R.id.btnAntiTheft)
-        btnUnpair = findViewById(R.id.btnUnpair)
-        btnSos = findViewById(R.id.btnSos)
-        btnCheckin = findViewById(R.id.btnCheckin)
-        etUrl = findViewById(R.id.etSupabaseUrl)
-        etKey = findViewById(R.id.etSupabaseKey)
-        etDeviceId = findViewById(R.id.etDeviceId)
-        etToken = findViewById(R.id.etDeviceToken)
-        spInterval = findViewById(R.id.spInterval)
-        cbPrecision = findViewById(R.id.cbPrecision)
-        cbAdaptive = findViewById(R.id.cbAdaptive)
-        cbDiscreet = findViewById(R.id.cbDiscreet)
-        cbRemote = findViewById(R.id.cbRemote)
-        cbSmart = findViewById(R.id.cbSmart)
-        cbShareApps = findViewById(R.id.cbShareApps)
-
-        spInterval.adapter = ArrayAdapter(
+        b.spInterval.adapter = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_dropdown_item,
             intervalOptions.map { "$it s" }
@@ -164,35 +135,42 @@ class MainActivity : AppCompatActivity() {
 
         loadSettings()
         refreshSecurity()
+        refreshPairing()
+        refreshSetup()
 
-        btnToggle.setOnClickListener {
+        b.btnToggle.setOnClickListener {
             if (LocationService.isRunning) requestStop() else onToggleClicked()
         }
-        findViewById<Button>(R.id.btnSave).setOnClickListener { saveSettings() }
-        btnBattery.setOnClickListener { requestBatteryExemption() }
-        btnPin.setOnClickListener {
-            PinPrompt.changeOrSet(this) { refreshSecurity() }
+        b.btnSave.setOnClickListener { saveSettings() }
+        b.btnPaste.setOnClickListener {
+            // Cambiar a donde reporta este telefono es un cambio de emparejamiento:
+            // mismo candado que Guardar (si hay PIN, lo pide; si no, pasa directo).
+            PinPrompt.runGuarded(this, "Pegar credenciales del emparejamiento") { pasteCredentials() }
         }
-        btnAntiTheft.setOnClickListener { toggleAntiTheft() }
-        btnUnpair.setOnClickListener { confirmUnpair() }
-        btnCheckin.setOnClickListener {
+        b.btnBattery.setOnClickListener { requestBatteryExemption() }
+        b.btnPin.setOnClickListener {
+            PinPrompt.changeOrSet(this) { refreshSecurity(); refreshSetup() }
+        }
+        b.btnAntiTheft.setOnClickListener { toggleAntiTheft() }
+        b.btnUnpair.setOnClickListener { confirmUnpair() }
+        b.btnCheckin.setOnClickListener {
             EventReporter.sendCheckin(this)
             Toast.makeText(this, "Aviso enviado: llegué bien", Toast.LENGTH_SHORT).show()
         }
-        btnSos.setOnClickListener { confirmSos() }
+        b.btnSos.setOnClickListener { confirmSos() }
 
         // Apariencia: sistema / claro / oscuro, persistido en los ajustes
-        findViewById<Button>(R.id.btnThemeSystem).setOnClickListener {
+        b.btnThemeSystem.setOnClickListener {
             settings.themeMode = 0
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
             updateThemeButtons()
         }
-        findViewById<Button>(R.id.btnThemeLight).setOnClickListener {
+        b.btnThemeLight.setOnClickListener {
             settings.themeMode = 1
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
             updateThemeButtons()
         }
-        findViewById<Button>(R.id.btnThemeDark).setOnClickListener {
+        b.btnThemeDark.setOnClickListener {
             settings.themeMode = 2
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
             updateThemeButtons()
@@ -223,6 +201,7 @@ class MainActivity : AppCompatActivity() {
         // Abrir la app tambien es una comprobacion: si alguien ha tocado
         // permisos o el modo antirrobo, se sube ahora (sin esperar al worker).
         refreshSecurity()
+        refreshSetup()
         reportHealth()
     }
 
@@ -254,8 +233,8 @@ class MainActivity : AppCompatActivity() {
         val admin = if (DeviceAdmin.isActive(this)) "modo antirrobo activo" else "modo antirrobo inactivo"
         val remote = if (settings.remoteControl) "control remoto activo" else "control remoto apagado"
         val tamper = TamperCheck.summary(this)
-        securityText.text = "$pin · $admin · $remote\n$tamper"
-        btnAntiTheft.text =
+        b.securityText.text = "$pin · $admin · $remote\n$tamper"
+        b.btnAntiTheft.text =
             if (DeviceAdmin.isActive(this)) getString(R.string.btn_anti_theft_off)
             else getString(R.string.btn_anti_theft_on)
     }
@@ -272,6 +251,7 @@ class MainActivity : AppCompatActivity() {
                 settings.antiTheftEnabled = false // apagado a proposito: no es manipulacion
                 Toast.makeText(this, "Modo antirrobo desactivado", Toast.LENGTH_SHORT).show()
                 refreshSecurity()
+                refreshSetup()
                 reportHealth()
             }
             return
@@ -401,6 +381,197 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ------------------------------------------------------- emparejamiento
+
+    /**
+     * Emparejamiento sin tecleo: el panel muestra UUID+token al emparejar
+     * (o el usuario copia los 4 datos). Aqui se pegan y se clasifican solos:
+     *  - URL https://...                                  -> URL de Supabase
+     *  - JWT (empieza por "eyJ")                          -> clave anon
+     *  - UUID canonico                                    -> UUID del dispositivo
+     *  - cualquier otra linea no vacia                    -> token
+     * Si la URL del portapapeles es distinta de la guardada, se pide
+     * confirmacion: asi no se pisan credenciales de otro proyecto sin querer.
+     */
+    private fun pasteCredentials() {
+        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+        val raw = cm?.primaryClip?.getItemAt(0)?.text?.toString().orEmpty().trim()
+        if (raw.isEmpty()) {
+            Toast.makeText(this, "El portapapeles está vacío", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        var url: String? = null
+        var key: String? = null
+        var uuid: String? = null
+        val tokenParts = ArrayList<String>()
+
+        val uuidRegex = Regex(
+            "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        )
+        for (line0 in raw.split('\n', '\r')) {
+            val line = line0.trim().trim('"', ',', ';')
+            if (line.isEmpty() || line.startsWith("//")) continue
+            // Admite "clave: valor" y pares JSON ("supabaseUrl": "..."), pero
+            // prueba primero la linea completa: "https://..." contiene ':' y
+            // un recorte por dos puntos romperia la URL (https:// -> //...).
+            val value = if (line.startsWith("https://") || line.startsWith("eyJ") ||
+                uuidRegex.matches(line)
+            ) {
+                line.trim('"', ' ', '\t').trimEnd(',')
+            } else {
+                line.substringAfter(':', missingDelimiterValue = line)
+                    .trim()
+                    .trim('"', ' ', '\t')
+                    .trimEnd(',')
+            }
+            when {
+                value.startsWith("https://") && !value.contains(' ') -> url = value
+                value.startsWith("eyJ") -> key = value
+                uuidRegex.matches(value) -> uuid = value.lowercase(Locale.ROOT)
+                else -> tokenParts.add(value)
+            }
+        }
+
+        val urlFinal = url ?: settings.supabaseUrl
+        val keyFinal = key ?: settings.supabaseKey
+        if (urlFinal.isBlank() || keyFinal.isBlank()) {
+            Toast.makeText(this, "No encontré URL y clave anon en el portapapeles", Toast.LENGTH_LONG).show()
+            return
+        }
+        val tokenFinal = tokenParts.joinToString("") { it.trim() }
+            .ifBlank { settings.deviceToken }
+        val uuidFinal = uuid ?: settings.deviceId
+
+        fun apply() {
+            b.etSupabaseUrl.setText(urlFinal)
+            b.etSupabaseKey.setText(keyFinal)
+            b.etDeviceId.setText(uuidFinal)
+            b.etDeviceToken.setText(tokenFinal)
+            settings.supabaseUrl = urlFinal
+            settings.supabaseKey = keyFinal
+            settings.deviceId = uuidFinal
+            settings.deviceToken = tokenFinal
+            refreshPairing()
+            Toast.makeText(this, "Credenciales pegadas: pulsa Guardar", Toast.LENGTH_LONG).show()
+        }
+
+        if (url != null && settings.supabaseUrl.isNotBlank() &&
+            url != settings.supabaseUrl && settings.deviceId.isNotBlank()
+        ) {
+            // La URL traida es de OTRO proyecto y ya hay un dispositivo configurado:
+            // confirmar antes de pisar (evita emparejar con credenciales ajenas).
+            AlertDialog.Builder(this)
+                .setTitle("¿Cambiar de proyecto?")
+                .setMessage(
+                    "La URL del portapapeles es distinta de la guardada:\n\n" +
+                        "Guardada: ${settings.supabaseUrl}\n" +
+                        "Pegada: $url\n\n" +
+                        "Si continúas, el dispositivo se reconfigura al nuevo proyecto " +
+                        "(tendrás su UUID y token para volver a emparejar)."
+                )
+                .setPositiveButton("Usar la pegada") { _, _ -> apply() }
+                .setNegativeButton("Cancelar", null)
+                .show()
+        } else {
+            apply()
+        }
+    }
+
+    /** Estado del emparejamiento, visible sin adivinar: verde listo, ambar falta. */
+    private fun refreshPairing() {
+        if (settings.pairingComplete) {
+            b.pairStatus.text = getString(R.string.pair_status_ok)
+            b.pairStatus.setBackgroundResource(R.drawable.bg_status_ok)
+            b.pairStatus.setTextColor(resources.getColor(R.color.status_ok_text, theme))
+        } else {
+            val missing = ArrayList<String>()
+            if (!settings.supabaseUrl.startsWith("https://")) missing.add(getString(R.string.missing_url))
+            if (settings.supabaseKey.isBlank()) missing.add(getString(R.string.missing_key))
+            if (settings.deviceId.isBlank()) missing.add(getString(R.string.missing_uuid))
+            if (settings.deviceToken.isBlank()) missing.add(getString(R.string.missing_token))
+            b.pairStatus.text = getString(R.string.pair_status_missing, missing.joinToString(", "))
+            b.pairStatus.setBackgroundResource(R.drawable.bg_status_warn)
+            b.pairStatus.setTextColor(resources.getColor(R.color.accent_amber, theme))
+        }
+    }
+
+    // ------------------------------------------------- puesta a punto (setup)
+
+    /** Requisitos con su estado actual; el orden define la prioridad de arreglo. */
+    private data class SetupItem(val label: String, val ok: Boolean)
+
+    private fun setupItems(): List<SetupItem> {
+        val items = ArrayList<SetupItem>()
+        items.add(SetupItem(getString(R.string.setup_location), hasLocationPermission()))
+        if (Build.VERSION.SDK_INT >= 29) {
+            items.add(
+                SetupItem(
+                    getString(R.string.setup_background),
+                    checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) ==
+                        PackageManager.PERMISSION_GRANTED
+                )
+            )
+        }
+        if (Build.VERSION.SDK_INT >= 33) {
+            items.add(
+                SetupItem(
+                    getString(R.string.setup_notifications),
+                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+                        PackageManager.PERMISSION_GRANTED
+                )
+            )
+        }
+        val pm = getSystemService(POWER_SERVICE) as PowerManager
+        items.add(SetupItem(getString(R.string.setup_battery), pm.isIgnoringBatteryOptimizations(packageName)))
+        items.add(SetupItem(getString(R.string.setup_pin), pins.isSet))
+        items.add(SetupItem(getString(R.string.setup_antitheft), DeviceAdmin.isActive(this)))
+        return items
+    }
+
+    /** Lista visible de la puesta a punto: cada requisito con su ✓ o ✗. */
+    private fun refreshSetup() {
+        val items = setupItems()
+        val text = items.joinToString("\n") { (if (it.ok) "✓ " else "✗ ") + it.label }
+        b.setupStatus.text = text
+        b.setupStatus.setTextColor(
+            resources.getColor(
+                if (items.all { it.ok }) R.color.status_ok_text else R.color.text_primary,
+                theme
+            )
+        )
+    }
+
+    /** Corrige el primer requisito pendiente, con la misma UI que el resto de la app. */
+    private fun fixFirstPendingSetup() {
+        val items = setupItems()
+        val labels = listOf(
+            getString(R.string.setup_location),
+            getString(R.string.setup_background),
+            getString(R.string.setup_notifications),
+            getString(R.string.setup_battery),
+            getString(R.string.setup_pin),
+            getString(R.string.setup_antitheft)
+        )
+        val first = items.firstOrNull { !it.ok }?.label
+        when (labels.indexOf(first)) {
+            0 -> { // permiso de ubicacion
+                waitingForPermissions = false
+                requestPermissions()
+            }
+            1 -> requestBackgroundIfNeeded()
+            2 -> if (Build.VERSION.SDK_INT >= 33) {
+                requestPermissions()
+            }
+            3 -> requestBatteryExemption()
+            4 -> PinPrompt.changeOrSet(this) { refreshSecurity(); refreshSetup() }
+            5 -> toggleAntiTheft()
+        }
+        if (items.all { it.ok }) {
+            Toast.makeText(this, "Todo listo: ya puedes iniciar el rastreo", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     // ------------------------------------------------------------- permisos
 
     private fun hasLocationPermission(): Boolean =
@@ -458,17 +629,12 @@ class MainActivity : AppCompatActivity() {
     // ------------------------------------------------------------- settings
 
     private fun loadSettings() {
-        etUrl.setText(settings.supabaseUrl)
-        etKey.setText(settings.supabaseKey)
-        etDeviceId.setText(settings.deviceId)
-        etToken.setText(settings.deviceToken)
-        spInterval.setSelection(intervalOptions.indexOf(settings.intervalSec).coerceAtLeast(0))
-        cbPrecision.isChecked = settings.precisionPlus
-        cbAdaptive.isChecked = settings.adaptiveBattery
-        cbDiscreet.isChecked = settings.discreetNotif
-        cbRemote.isChecked = settings.remoteControl
-        cbSmart.isChecked = settings.smartTracking
-        cbShareApps.isChecked = settings.shareAppList
+        b.etSupabaseUrl.setText(settings.supabaseUrl)
+        b.etSupabaseKey.setText(settings.supabaseKey)
+        b.etDeviceId.setText(settings.deviceId)
+        b.etDeviceToken.setText(settings.deviceToken)
+        b.spInterval.setSelection(intervalOptions.indexOf(settings.intervalSec).coerceAtLeast(0))
+        cbs.forEach { it.view.isChecked = it.load() }
     }
 
     /** Cambiar la configuracion mueve a donde se reporta: pide PIN si hay uno. */
@@ -477,17 +643,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun doSave() {
-        settings.supabaseUrl = etUrl.text.toString()
-        settings.supabaseKey = etKey.text.toString()
-        settings.deviceId = etDeviceId.text.toString()
-        settings.deviceToken = etToken.text.toString()
-        settings.intervalSec = intervalOptions[spInterval.selectedItemPosition.coerceAtLeast(0)]
-        settings.precisionPlus = cbPrecision.isChecked
-        settings.adaptiveBattery = cbAdaptive.isChecked
-        settings.discreetNotif = cbDiscreet.isChecked
-        settings.remoteControl = cbRemote.isChecked
-        settings.smartTracking = cbSmart.isChecked
-        settings.shareAppList = cbShareApps.isChecked
+        settings.supabaseUrl = b.etSupabaseUrl.text.toString()
+        settings.supabaseKey = b.etSupabaseKey.text.toString()
+        settings.deviceId = b.etDeviceId.text.toString()
+        settings.deviceToken = b.etDeviceToken.text.toString()
+        settings.intervalSec = intervalOptions[b.spInterval.selectedItemPosition.coerceAtLeast(0)]
+        cbs.forEach { it.save(it.view.isChecked) }
 
         Toast.makeText(
             this,
@@ -500,6 +661,7 @@ class MainActivity : AppCompatActivity() {
             startService(Intent(this, LocationService::class.java))
         }
         refreshSecurity()
+        refreshPairing()
     }
 
     // ------------------------------------------------------------- desvincular
@@ -532,9 +694,10 @@ class MainActivity : AppCompatActivity() {
                 runCatching { AppDatabase.get(applicationContext).locationDao().clearAll() }
             }
             settings.clearPairing()
-            etDeviceId.setText("")
-            etToken.setText("")
+            b.etDeviceId.setText("")
+            b.etDeviceToken.setText("")
             refreshSecurity()
+            refreshPairing()
             Toast.makeText(
                 this@MainActivity,
                 if (serverOk) "Dispositivo desvinculado: el token ya no es válido en el servidor"
@@ -550,9 +713,9 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 ServiceStateHolder.state.collect { st ->
-                    btnToggle.text =
+                    b.btnToggle.text =
                         if (st.running) getString(R.string.btn_toggle_stop) else getString(R.string.btn_toggle_start)
-                    statusText.text = if (!st.running) {
+                    b.statusText.text = if (!st.running) {
                         getString(R.string.status_stopped)
                     } else {
                         val lat = st.lastLat
@@ -560,7 +723,7 @@ class MainActivity : AppCompatActivity() {
                         buildString {
                             append("Activo")
                             if (lat != null && lon != null) {
-                                append(" · ").append("%.5f, %.5f".format(lat, lon))
+                                append(" · ").append(String.format(Locale.US, "%.5f, %.5f", lat, lon))
                             }
                             st.lastAccuracy?.let { append(" · ±").append(Math.round(it)).append(" m") }
                             st.lastSource?.let { append(" · ").append(it) }

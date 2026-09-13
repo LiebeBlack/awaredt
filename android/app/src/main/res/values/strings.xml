@@ -57,13 +57,20 @@
     <string name="notif_sync_title">Sincronizando datos</string>
     <string name="notif_sync_text">Enviando posiciones pendientes</string>
 
-    <string name="pref_tracking_enabled">tracking_enabled</string>
-    <string name="pref_device_id">device_id</string>
-    <string name="pref_device_token">device_token</string>
-    <string name="pref_supabase_url">supabase_url</string>
-    <string name="pref_supabase_key">supabase_anon_key</string>
-    <string name="pref_interval_sec">interval_sec</string>
-    <string name="pref_interval_slow_sec">interval_slow_sec</string>
-    <string name="pref_precision_plus">precision_plus</string>
-    <string name="pref_adaptive_battery">adaptive_battery</string>
+    <!-- Emparejamiento sin tecleo y puesta a punto -->
+    <string name="btn_paste">Pegar credenciales (desde el panel)</string>
+    <string name="pair_status_ok">Emparejado ✓ — Listo para rastrear</string>
+    <string name="pair_status_missing">Falta: %1$s</string>
+    <string name="missing_url">URL de Supabase</string>
+    <string name="missing_key">clave anon</string>
+    <string name="missing_uuid">UUID del dispositivo</string>
+    <string name="missing_token">token de emparejamiento</string>
+    <string name="section_setup">Puesta a punto</string>
+    <string name="setup_check">Corregir lo que falta</string>
+    <string name="setup_location">Permiso de ubicación</string>
+    <string name="setup_background">Ubicación en segundo plano («Permitir todo el tiempo»)</string>
+    <string name="setup_notifications">Notificaciones</string>
+    <string name="setup_battery">Exención de optimización de batería</string>
+    <string name="setup_pin">PIN del propietario</string>
+    <string name="setup_antitheft">Modo antirrobo</string>
 </resources>
