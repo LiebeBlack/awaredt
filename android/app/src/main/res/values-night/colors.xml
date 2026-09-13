@@ -30,4 +30,8 @@
 
     <color name="hero_start">#4338CA</color>
     <color name="hero_end">#1E1B4B</color>
+
+    <!-- Barra de navegacion inferior: indigo aclarado, inactivo gris azulado -->
+    <color name="nav_active">#818CF8</color>
+    <color name="nav_inactive">#9AA1B9</color>
 </resources>

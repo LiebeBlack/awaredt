@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/tabHome"
+        android:icon="@drawable/ic_tab_home"
+        android:title="@string/tab_home" />
+    <item
+        android:id="@+id/tabPair"
+        android:icon="@drawable/ic_tab_key"
+        android:title="@string/tab_pair" />
+    <item
+        android:id="@+id/tabTrack"
+        android:icon="@drawable/ic_tab_nav"
+        android:title="@string/tab_track" />
+    <item
+        android:id="@+id/tabSecurity"
+        android:icon="@drawable/ic_tab_shield"
+        android:title="@string/tab_security" />
+    <item
+        android:id="@+id/tabSettings"
+        android:icon="@drawable/ic_settings_gear"
+        android:title="@string/tab_settings" />
+</menu>

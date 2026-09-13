@@ -75,6 +75,17 @@ foreach ($f in $kt) {
   }
 }
 
+# Selectores de color (res/color y res/color-night): el nombre del ARCHIVO es
+# el recurso. Lo que se comprueba es que los @color/ que referencia DENTRO
+# existan en values/ o values-night/: si no, el inflador falla al usarlo.
+$colorSelectors = @{}
+$colorDir = Join-Path $resDir 'color'
+if (Test-Path $colorDir) {
+  foreach ($f in Get-ChildItem -Path $colorDir -Recurse -File -Filter *.xml) {
+    $colorSelectors[$f.BaseName] = $f.FullName
+  }
+}
+
 # referencias a @string/ desde layouts y estilos
 foreach ($f in Get-ChildItem -Path $resDir -Recurse -File -Filter *.xml) {
   $txt = [System.IO.File]::ReadAllText($f.FullName)
@@ -85,7 +96,23 @@ foreach ($f in Get-ChildItem -Path $resDir -Recurse -File -Filter *.xml) {
   foreach ($m in [regex]::Matches($txt, '@color/([A-Za-z_][A-Za-z0-9_]*)')) {
     $c = $m.Groups[1].Value
     $colores = [System.IO.File]::ReadAllText((Join-Path $resDir 'values/colors.xml'))
-    if ($colores -notmatch ('name="' + [regex]::Escape($c) + '"')) { Mal "$($f.Name) usa @color/$c y no existe" }
+    if ($colores -notmatch ('name="' + [regex]::Escape($c) + '"') -and -not $colorSelectors.ContainsKey($c)) {
+      Mal "$($f.Name) usa @color/$c y no existe"
+    }
+  }
+}
+
+# Validez interna de cada selector: sus @color/ internos deben existir.
+foreach ($nombre in $colorSelectors.Keys) {
+  $txt = [System.IO.File]::ReadAllText($colorSelectors[$nombre])
+  $base = [System.IO.File]::ReadAllText((Join-Path $resDir 'values/colors.xml'))
+  $nightPath = Join-Path $resDir 'values-night/colors.xml'
+  $noche = if (Test-Path $nightPath) { [System.IO.File]::ReadAllText($nightPath) } else { '' }
+  foreach ($m in [regex]::Matches($txt, '@color/([A-Za-z_][A-Za-z0-9_]*)')) {
+    $c = $m.Groups[1].Value
+    if (($base + $noche) -notmatch ('name="' + [regex]::Escape($c) + '"')) {
+      Mal "selector de color $nombre usa @color/$c y no existe"
+    }
   }
 }
 

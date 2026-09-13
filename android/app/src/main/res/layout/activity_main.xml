@@ -1,393 +1,485 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="@color/bg">
+    android:background="@color/bg"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="20dp"
-        android:paddingBottom="32dp">
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/bg"
+        android:elevation="0dp"
+        app:title="@string/app_name"
+        app:titleTextColor="@color/text_primary" />
 
-        <!-- ============================= HERO ============================= -->
+    <ScrollView
+        android:id="@+id/scrollHost"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_hero"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingHorizontal="16dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="24dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/hero_title"
-                android:textColor="#FFFFFF"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="@string/hero_subtitle"
-                android:textColor="#C7D2FE"
-                android:textSize="13sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:text="@string/label_status"
-                android:textAllCaps="true"
-                android:letterSpacing="0.1"
-                android:textColor="#A5B4FC"
-                android:textSize="11sp" />
-
-            <TextView
-                android:id="@+id/statusText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:lineSpacingExtra="3dp"
-                android:text="Detenido"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/btnToggle"
-                style="@style/Btn.Secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:textColor="#FFFFFF"
-                android:text="@string/btn_toggle_start" />
-        </LinearLayout>
-
-        <!-- Boton de sistema: exencion de bateria -->
-        <Button
-            android:id="@+id/btnBattery"
-            style="@style/Btn.Secondary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/btn_battery" />
-
-        <!-- ===================== EMPAREJAMIENTO ===================== -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView style="@style/SectionTitle" android:text="@string/section_pairing" />
-
-            <Button
-                android:id="@+id/btnPaste"
-                style="@style/Btn"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/btn_paste" />
-
-            <EditText
-                android:id="@+id/etSupabaseUrl"
-                style="@style/Field"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/field_url_hint"
-                android:inputType="textUri" />
-
-            <EditText
-                android:id="@+id/etSupabaseKey"
-                style="@style/Field"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/field_key_hint"
-                android:inputType="text" />
-
-            <EditText
-                android:id="@+id/etDeviceId"
-                style="@style/Field"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/field_device_hint"
-                android:inputType="text" />
-
-            <EditText
-                android:id="@+id/etDeviceToken"
-                style="@style/Field"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/field_token_hint"
-                android:inputType="text" />
-
-            <TextView
-                android:id="@+id/pairStatus"
-                style="@style/StatusLine"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_status_warn"
-                android:text="@string/pair_status_missing" />
-        </LinearLayout>
-
-        <!-- ===================== COMPORTAMIENTO ===================== -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView style="@style/SectionTitle" android:text="@string/section_behavior" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/label_interval"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
-
-            <Spinner
-                android:id="@+id/spInterval"
-                android:layout_width="match_parent"
-                android:layout_height="48dp" />
-
-            <CheckBox
-                android:id="@+id/cbPrecision"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/cb_precision"
-                android:textColor="@color/text_primary" />
-
-            <CheckBox
-                android:id="@+id/cbAdaptive"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:checked="true"
-                android:text="@string/cb_adaptive"
-                android:textColor="@color/text_primary" />
-
-            <CheckBox
-                android:id="@+id/cbDiscreet"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:checked="true"
-                android:text="@string/cb_discreet"
-                android:textColor="@color/text_primary" />
-
-            <Button
-                android:id="@+id/btnSave"
-                style="@style/Btn"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/btn_save" />
-        </LinearLayout>
-
-        <!-- ================= AVISOS DESDE ESTE TELEFONO ================= -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView style="@style/SectionTitle" android:text="@string/section_alerts" />
-
-            <Button
-                android:id="@+id/btnSos"
-                style="@style/Btn"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:backgroundTint="@color/accent_red"
-                android:text="@string/sos_button" />
-
-            <Button
-                android:id="@+id/btnCheckin"
-                style="@style/Btn"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/checkin_button" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="@string/sos_hint"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
-        </LinearLayout>
-
-        <!-- ================= SEGURIDAD Y CONTROL ================= -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView style="@style/SectionTitle" android:text="@string/section_security" />
-
-            <TextView
-                android:id="@+id/securityText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:lineSpacingExtra="3dp"
-                android:text="—"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
-
-            <Button
-                android:id="@+id/btnPin"
-                style="@style/Btn.Secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/btn_pin" />
-
-            <CheckBox
-                android:id="@+id/cbRemote"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:checked="true"
-                android:text="@string/cb_remote"
-                android:textColor="@color/text_primary" />
-
-            <CheckBox
-                android:id="@+id/cbShareApps"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:checked="true"
-                android:text="@string/cb_share_apps"
-                android:textColor="@color/text_primary" />
-
-            <CheckBox
-                android:id="@+id/cbSmart"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:checked="true"
-                android:text="@string/cb_smart"
-                android:textColor="@color/text_primary" />
-
-            <Button
-                android:id="@+id/btnAntiTheft"
-                style="@style/Btn.Secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/btn_anti_theft_on" />
-
-            <Button
-                android:id="@+id/btnUnpair"
-                style="@style/Btn.Secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/btn_unpair" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/footer_note"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
-        </LinearLayout>
-
-        <!-- ================= PUESTA A PUNTO (checklist) ================= -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView style="@style/SectionTitle" android:text="@string/section_setup" />
-
-            <TextView
-                android:id="@+id/setupStatus"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:lineSpacingExtra="4dp"
-                android:textColor="@color/text_primary"
-                android:textSize="13sp" />
-
-            <Button
-                android:id="@+id/btnCheckSetup"
-                style="@style/Btn.Secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/setup_check" />
-        </LinearLayout>
-
-        <!-- ===================== APARIENCIA (tema) ===================== -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView style="@style/SectionTitle" android:text="@string/section_appearance" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/theme_label"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
-
+            <!-- ======================= PAGINA: INICIO ======================= -->
             <LinearLayout
+                android:id="@+id/pageHome"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:orientation="horizontal">
+                android:orientation="vertical">
 
-                <Button
-                    android:id="@+id/btnThemeSystem"
-                    style="@style/ThemeChip"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/theme_system" />
+                    android:background="@drawable/bg_hero"
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-                <Button
-                    android:id="@+id/btnThemeLight"
-                    style="@style/ThemeChip"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:text="@string/theme_light" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/hero_title"
+                        android:textColor="#FFFFFF"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/btnThemeDark"
-                    style="@style/ThemeChip"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/hero_subtitle"
+                        android:textColor="#C7D2FE"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text="@string/label_status"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.1"
+                        android:textColor="#A5B4FC"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/statusText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:lineSpacingExtra="3dp"
+                        android:text="@string/status_stopped"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp" />
+
+                    <Button
+                        android:id="@+id/btnToggle"
+                        style="@style/Btn.Secondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:textColor="#FFFFFF"
+                        android:text="@string/btn_toggle_start" />
+                </LinearLayout>
+
+                <!-- Puesta a punto en Inicio: es lo primero que hay que resolver -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/theme_dark" />
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_card"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        style="@style/SectionTitle"
+                        android:text="@string/section_setup" />
+
+                    <TextView
+                        android:id="@+id/setupStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:lineSpacingExtra="4dp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp" />
+
+                    <Button
+                        android:id="@+id/btnCheckSetup"
+                        style="@style/Btn.Secondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_check" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/footer_note"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
             </LinearLayout>
 
-            <TextView
+            <!-- ====================== PAGINA: EMPAREJAR ====================== -->
+            <LinearLayout
+                android:id="@+id/pagePair"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/theme_note"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
-        </LinearLayout>
+                android:orientation="vertical"
+                android:visibility="gone">
 
-    </LinearLayout>
-</ScrollView>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_card"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        style="@style/SectionTitle"
+                        android:text="@string/section_pairing" />
+
+                    <Button
+                        android:id="@+id/btnPaste"
+                        style="@style/Btn"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/btn_paste" />
+
+                    <EditText
+                        android:id="@+id/etSupabaseUrl"
+                        style="@style/Field"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/field_url_hint"
+                        android:inputType="textUri" />
+
+                    <EditText
+                        android:id="@+id/etSupabaseKey"
+                        style="@style/Field"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/field_key_hint"
+                        android:inputType="text" />
+
+                    <EditText
+                        android:id="@+id/etDeviceId"
+                        style="@style/Field"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/field_device_hint"
+                        android:inputType="text" />
+
+                    <EditText
+                        android:id="@+id/etDeviceToken"
+                        style="@style/Field"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/field_token_hint"
+                        android:inputType="text" />
+
+                    <TextView
+                        android:id="@+id/pairStatus"
+                        style="@style/StatusLine"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_status_warn"
+                        android:text="@string/pair_status_missing" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ======================= PAGINA: RASTREO ======================= -->
+            <LinearLayout
+                android:id="@+id/pageTrack"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- Bateria: requisito clave del rastreo en segundo plano -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_card"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        style="@style/SectionTitle"
+                        android:text="@string/setup_battery" />
+
+                    <Button
+                        android:id="@+id/btnBattery"
+                        style="@style/Btn"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/btn_battery" />
+                </LinearLayout>
+
+                <!-- Avisos desde este telefono -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_card"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        style="@style/SectionTitle"
+                        android:text="@string/section_alerts" />
+
+                    <Button
+                        android:id="@+id/btnSos"
+                        style="@style/Btn"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:backgroundTint="@color/accent_red"
+                        android:text="@string/sos_button" />
+
+                    <Button
+                        android:id="@+id/btnCheckin"
+                        style="@style/Btn"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/checkin_button" />
+
+                    <TextView
+                        style="@style/Caption"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/sos_hint" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ====================== PAGINA: SEGURIDAD ====================== -->
+            <LinearLayout
+                android:id="@+id/pageSecurity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_card"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        style="@style/SectionTitle"
+                        android:text="@string/section_security" />
+
+                    <TextView
+                        android:id="@+id/securityText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:lineSpacingExtra="3dp"
+                        android:text="—"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <Button
+                        android:id="@+id/btnPin"
+                        style="@style/Btn.Secondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/btn_pin" />
+
+                    <CheckBox
+                        android:id="@+id/cbRemote"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:checked="true"
+                        android:text="@string/cb_remote"
+                        android:textColor="@color/text_primary" />
+
+                    <CheckBox
+                        android:id="@+id/cbShareApps"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:checked="true"
+                        android:text="@string/cb_share_apps"
+                        android:textColor="@color/text_primary" />
+
+                    <CheckBox
+                        android:id="@+id/cbSmart"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:checked="true"
+                        android:text="@string/cb_smart"
+                        android:textColor="@color/text_primary" />
+
+                    <Button
+                        android:id="@+id/btnAntiTheft"
+                        style="@style/Btn.Secondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/btn_anti_theft_on" />
+
+                    <Button
+                        android:id="@+id/btnUnpair"
+                        style="@style/Btn.Secondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/btn_unpair" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ======================= PAGINA: AJUSTES ======================= -->
+            <LinearLayout
+                android:id="@+id/pageSettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- Comportamiento del rastreo -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_card"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        style="@style/SectionTitle"
+                        android:text="@string/section_behavior" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/label_interval"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <Spinner
+                        android:id="@+id/spInterval"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp" />
+
+                    <CheckBox
+                        android:id="@+id/cbPrecision"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/cb_precision"
+                        android:textColor="@color/text_primary" />
+
+                    <CheckBox
+                        android:id="@+id/cbAdaptive"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:checked="true"
+                        android:text="@string/cb_adaptive"
+                        android:textColor="@color/text_primary" />
+
+                    <CheckBox
+                        android:id="@+id/cbDiscreet"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:checked="true"
+                        android:text="@string/cb_discreet"
+                        android:textColor="@color/text_primary" />
+
+                    <Button
+                        android:id="@+id/btnSave"
+                        style="@style/Btn"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/btn_save" />
+                </LinearLayout>
+
+                <!-- Apariencia: selector de tema -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_card"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        style="@style/SectionTitle"
+                        android:text="@string/section_appearance" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/theme_label"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btnThemeSystem"
+                            style="@style/ThemeChip"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/theme_system" />
+
+                        <Button
+                            android:id="@+id/btnThemeLight"
+                            style="@style/ThemeChip"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/theme_light" />
+
+                        <Button
+                            android:id="@+id/btnThemeDark"
+                            style="@style/ThemeChip"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/theme_dark" />
+                    </LinearLayout>
+
+                    <TextView
+                        style="@style/Caption"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/theme_note" />
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Navegacion inferior: una ventana por seccion -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        app:elevation="8dp"
+        app:itemIconTint="@color/nav_item"
+        app:itemTextColor="@color/nav_item"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/menu_tabs" />
+
+</LinearLayout>

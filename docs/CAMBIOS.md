@@ -12,6 +12,29 @@ hay que reejecutarlo.
 
 Si el panel dice *«Reejecuta supabase-setup.sql: falta …»* es exactamente eso: falta el paso 1.
 
+## v1.6 — Interfaz por ventanas y permisos que nunca se quedan mudos
+
+- **Navegación por pestañas** (barra inferior, 5 ventanas): **Inicio** (hero con
+  estado + puesta a punto), **Emparejar**, **Rastreo** (batería + SOS/«llegué
+  bien»), **Seguridad** (PIN, antirrobo, desvincular) y **Ajustes** (intervalo,
+  interruptores, tema). Se acabó el scroll infinito: cada sección es una
+  pantalla propia, con menos contenido por pantalla y menor coste de render.
+- **La petición de permisos ya no muere en silencio.** En Android 11+, tras dos
+  negativas, el sistema deja de mostrar el diálogo y la app se quedaba sin
+  respuesta ninguna. Ahora distingue denegación normal (avisa con toast) de
+  denegación silenciosa (diálogo con salto directo a Ajustes, donde «Permitir
+  todo el tiempo» siempre funciona), y si el propio diálogo del sistema revienta
+  (capas del fabricante), se abre Ajustes como camino alternativo.
+- **La pestaña activa sobrevive al cambio de tema** (la Activity se recrea al
+  alternar claro/oscuro; antes volvía siempre al principio).
+- **`adjustResize`**: el teclado ya no tapa los campos de emparejamiento.
+- **Toolbar propia** con menú de acceso rápido (tema, puesta a punto) y
+  **barra de navegación del sistema** del mismo color que el fondo.
+- **Comprobador extendido**: `check-wiring.ps1` valida ahora los selectores de
+  color (`res/color*`) — que el recurso exista y que los colores que referencian
+  por dentro existan en la paleta.
+- 63 → 76 textos, 14 → 24 recursos.
+
 ## v1.5 — Configuración sin tecleo y puesta a punto dentro de la app
 
 - **«Pegar credenciales»** (Emparejamiento): pega el mensaje del panel (UUID+token)

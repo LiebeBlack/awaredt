@@ -49,7 +49,7 @@ Ruta base: `android/app/src/main/java/com/locator/agent/`
 | Archivo | Rol | Red |
 |---|---|---|
 | `LocAgentApp.kt` | `Application`: crea los **3 canales de notificación** | — |
-| `MainActivity.kt` | Pantalla única: ajustes, PIN, antirrobo, SOS/check-in, divulgación, estado | sí |
+| `MainActivity.kt` | Pantalla por pestañas: ajustes, PIN, antirrobo, SOS/check-in, divulgación, estado | sí |
 | `admin/DeviceAdmin.kt` | Modo antirrobo (`DeviceAdminReceiver`, solo `force-lock`) | — |
 | `data/AppDatabase.kt` | Room cifrado (SQLCipher) + clave de BD en prefs cifradas | — |
 | `data/LocationEntity.kt` | Entidad `positions` del buffer local + DAO (pending/markSent/prune/clear) | — |
@@ -75,23 +75,33 @@ Ruta base: `android/app/src/main/java/com/locator/agent/`
 | `sync/TamperWorker.kt` | Revisión de estado cada 6 h (despierta el proceso aunque el servicio esté muerto) | sí |
 | `sync/WatchdogReceiver.kt` | Valla cada 15 min: relanza el servicio si el rastreo está activo | — |
 
-### 2.2 Recursos Android (14)
+### 2.2 Recursos Android (24)
 
 | Archivo | Contenido |
 |---|---|
-| `res/layout/activity_main.xml` | Pantalla única premium: hero con estado, tarjetas por sección, checklist de puesta a punto, selector de tema |
-| `res/values/strings.xml` | 63 textos y nombres de canal |
+| `res/layout/activity_main.xml` | Pantalla por ventanas: toolbar, 5 páginas (Inicio, Emparejar, Rastreo, Seguridad, Ajustes) y barra de navegación inferior |
+| `res/menu/menu_tabs.xml` | Pestañas de la navegación inferior (5, con iconos) |
+| `res/menu/menu_main.xml` | Menú de la barra superior: cambiar tema, puesta a punto |
+| `res/values/strings.xml` | 76 textos y nombres de canal |
 | `res/values/colors.xml` | Paleta clara del agente |
 | `res/values-night/colors.xml` | Paleta oscura (modo noche automático) |
 | `res/values/themes.xml` | Tema Material 3 con la paleta mapeada |
 | `res/values-night/themes.xml` | Ajuste del tema en modo noche (barra de estado) |
-| `res/values/styles.xml` | Estilos: secciones, campos, botones, chips de tema, línea de estado |
+| `res/values/styles.xml` | Estilos: secciones, campos, botones, chips de tema, línea de estado, captions |
+| `res/color/nav_item.xml` | Tinte activo/inactivo de la navegación inferior (modo claro) |
+| `res/color-night/nav_item.xml` | Tinte de la navegación inferior en modo noche |
 | `res/drawable/bg_card.xml` | Fondo de tarjeta redondeada |
 | `res/drawable/bg_field.xml` | Fondo redondeado de los campos de texto |
 | `res/drawable/bg_hero.xml` | Degradado índigo de la cabecera |
 | `res/drawable/bg_status_ok.xml` | Píldora verde del estado «Emparejado ✓» |
 | `res/drawable/bg_status_warn.xml` | Píldora ámbar del estado «Falta: …» |
 | `res/drawable/ic_launcher_foreground.xml` | Icono **visible** en el lanzador |
+| `res/drawable/ic_settings_gear.xml` | Icono de ajustes (pestaña y menú) |
+| `res/drawable/ic_tab_home.xml` | Icono de la pestaña Inicio |
+| `res/drawable/ic_tab_key.xml` | Icono de la pestaña Emparejar |
+| `res/drawable/ic_tab_nav.xml` | Icono de la pestaña Rastreo |
+| `res/drawable/ic_tab_pin.xml` | Icono de puesta a punto (menú) |
+| `res/drawable/ic_tab_shield.xml` | Icono de la pestaña Seguridad |
 | `res/xml/device_admin.xml` | Política de DeviceAdmin: solo `force-lock` |
 
 ### 2.3 Permisos (13) y consultas de visibilidad

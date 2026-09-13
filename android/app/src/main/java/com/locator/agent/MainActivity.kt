@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.AlertDialog
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -11,11 +12,15 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
@@ -93,6 +98,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Resultado del diálogo oficial de permisos. El caso importante NO es el
+     * "denegado" normal (se vuelve a pedir): es el SILENCIOSO — en Android 11+
+     * tras dos negativas el sistema deja de mostrar el diálogo y el resultado
+     * llega como falso sin abrir nada. Antes la app se quedaba muda ahí.
+     * Ahora se distingue con shouldShowRequestPermissionRationale y se ofrece
+     * el salto directo a Ajustes, donde "Permitir todo el tiempo" SIEMPRE
+     * funciona aunque el diálogo ya no aparezca nunca.
+     */
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
             val fine = grants[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
@@ -103,10 +117,42 @@ class MainActivity : AppCompatActivity() {
                     waitingForPermissions = false
                     startTracking()
                 }
-            } else {
-                Toast.makeText(this, "Se necesita permiso de ubicación", Toast.LENGTH_LONG).show()
+                return@registerForActivityResult
             }
+            val perm = Manifest.permission.ACCESS_FINE_LOCATION
+            val rationale = ActivityCompat.shouldShowRequestPermissionRationale(this, perm)
+            if (rationale) {
+                // Denegación normal: Android volverá a mostrar el diálogo.
+                Toast.makeText(this, getString(R.string.perm_denied_toast), Toast.LENGTH_LONG).show()
+            } else if (grants.containsKey(perm)) {
+                // Silencioso: el sistema ya no abrirá el diálogo por más veces
+                // que se pulse. Sin Ajustes no hay camino posible.
+                AlertDialog.Builder(this)
+                    .setTitle(getString(R.string.perm_blocked_title))
+                    .setMessage(getString(R.string.perm_blocked_msg))
+                    .setPositiveButton(getString(R.string.perm_blocked_open)) { _, _ ->
+                        openAppSettings()
+                    }
+                    .setNegativeButton(getString(R.string.later), null)
+                    .show()
+            }
+            // Sin clave para el permiso: el usuario cerró el diálogo con "no
+            // volver a preguntar" — mismo caso que la denegación silenciosa.
         }
+
+    /** Ajustes de la app: desde aquí "Ubicación -> Permitir todo el tiempo" siempre funciona. */
+    private fun openAppSettings() {
+        try {
+            startActivity(
+                Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", packageName, null)
+                )
+            )
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(this, getString(R.string.perm_settings_fail), Toast.LENGTH_LONG).show()
+        }
+    }
 
     /** Al volver del diálogo oficial de DeviceAdmin se refresca el estado. */
     private val adminLauncher =
@@ -126,6 +172,8 @@ class MainActivity : AppCompatActivity() {
         applySavedTheme()
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b.root)
+        // Barra superior con el menu (tema / puesta a punto) en el desborde.
+        setSupportActionBar(b.toolbar)
 
         b.spInterval.adapter = ArrayAdapter(
             this,
@@ -134,13 +182,14 @@ class MainActivity : AppCompatActivity() {
         )
 
         loadSettings()
-        refreshSecurity()
-        refreshPairing()
-        refreshSetup()
+        refreshAll()
 
         b.btnToggle.setOnClickListener {
             if (LocationService.isRunning) requestStop() else onToggleClicked()
         }
+
+        // Pestana visible tras un recreate (cambio de tema): se restaura mas
+        // abajo, justo despues de registrar el listener de navegacion.
         b.btnSave.setOnClickListener { saveSettings() }
         b.btnPaste.setOnClickListener {
             // Cambiar a donde reporta este telefono es un cambio de emparejamiento:
@@ -159,7 +208,9 @@ class MainActivity : AppCompatActivity() {
         }
         b.btnSos.setOnClickListener { confirmSos() }
 
-        // Apariencia: sistema / claro / oscuro, persistido en los ajustes
+        // Apariencia: sistema / claro / oscuro, persistido en los ajustes.
+        // saveEnabled=false: al recrear la Activity tras cambiar el tema no se
+        // vuelve a crear un segundo callback y no se duplica el refresco.
         b.btnThemeSystem.setOnClickListener {
             settings.themeMode = 0
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
@@ -177,10 +228,54 @@ class MainActivity : AppCompatActivity() {
         }
         updateThemeButtons()
 
+        // Navegacion por pestanas: una ventana por seccion, sin scroll infinito.
+        b.nav.addOnItemSelectedListener { item ->
+            showPage(item.itemId)
+            true
+        }
+        // Pestana visible tras un recreate (cambio de tema): la que eligio el
+        // usuario. Home ya es visible por XML, asi que solo se restauran otras.
+        val restored = savedInstanceState?.getInt(STATE_TAB, R.id.tabHome) ?: R.id.tabHome
+        if (restored != R.id.tabHome) b.nav.selectedItemId = restored
+
         observeState()
         handleIntent(intent)
         maybeAutoResume()
         maybeShowDisclosure()
+    }
+
+    companion object {
+        private const val STATE_TAB = "active_tab"
+    }
+
+    /** Pestana visible; se restaura sola tras el recreate() del cambio de tema. */
+    private fun showPage(tabId: Int) {
+        b.pageHome.visibility = if (tabId == R.id.tabHome) View.VISIBLE else View.GONE
+        b.pagePair.visibility = if (tabId == R.id.tabPair) View.VISIBLE else View.GONE
+        b.pageTrack.visibility = if (tabId == R.id.tabTrack) View.VISIBLE else View.GONE
+        b.pageSecurity.visibility = if (tabId == R.id.tabSecurity) View.VISIBLE else View.GONE
+        b.pageSettings.visibility = if (tabId == R.id.tabSettings) View.VISIBLE else View.GONE
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(STATE_TAB, b.nav.selectedItemId)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val tab = when (item.itemId) {
+            R.id.menuThemes -> R.id.tabSettings
+            R.id.menuSetup -> R.id.tabTrack
+            else -> return super.onOptionsItemSelected(item)
+        }
+        showPage(tab) // selectedItemId no re-dispara si ya estaba seleccionada
+        b.nav.selectedItemId = tab
+        return true
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -200,9 +295,22 @@ class MainActivity : AppCompatActivity() {
         }
         // Abrir la app tambien es una comprobacion: si alguien ha tocado
         // permisos o el modo antirrobo, se sube ahora (sin esperar al worker).
-        refreshSecurity()
-        refreshSetup()
         reportHealth()
+        // Volver de Ajustes es un punto de re-evaluacion: si el usuario acaba de
+        // conceder "Permitir todo el tiempo" (o notificaciones), se arranca solo.
+        if (settings.trackingEnabled && settings.pairingComplete &&
+            consentOk() && hasLocationPermission() && !LocationService.isRunning
+        ) {
+            LocationService.start(this)
+        }
+        refreshAll()
+    }
+
+    /** Recalcula en una sola pasada lo que depende de permisos y ajustes. */
+    private fun refreshAll() {
+        refreshSecurity()
+        refreshPairing()
+        refreshSetup()
     }
 
     override fun onStop() {
@@ -586,7 +694,13 @@ class MainActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= 33) {
             wanted.add(Manifest.permission.POST_NOTIFICATIONS)
         }
-        permissionLauncher.launch(wanted.toTypedArray())
+        try {
+            permissionLauncher.launch(wanted.toTypedArray())
+        } catch (_: Exception) {
+            // Algunas capas del fabricante revientan al abrir el diálogo;
+            // Ajustes SIEMPRE existe y desde ahí el permiso se concede igual.
+            openAppSettings()
+        }
     }
 
     private fun requestBackgroundIfNeeded() {

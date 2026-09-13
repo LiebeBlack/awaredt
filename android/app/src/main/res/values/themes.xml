@@ -12,6 +12,8 @@
         <item name="colorOutline">@color/card_stroke</item>
         <item name="android:statusBarColor">@color/bg</item>
         <item name="android:windowLightStatusBar">true</item>
+        <!-- Barra de navegacion del sistema del mismo color que el fondo -->
+        <item name="android:navigationBarColor">@color/bg</item>
     </style>
 
     <!-- Modo oscuro: status bar oscura, iconos claros -->

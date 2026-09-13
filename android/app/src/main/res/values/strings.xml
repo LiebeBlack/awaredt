@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Location Agent</string>
 
-    <!-- Interfaz principal (rediseño premium) -->
+    <!-- Interfaz principal (diseno premium, pestanas) -->
     <string name="hero_title">📍 Location Agent</string>
     <string name="hero_subtitle">Rastreo familiar con consentimiento</string>
     <string name="label_status">Estado</string>
@@ -38,13 +38,19 @@
     <string name="status_stopped">Detenido</string>
     <string name="theme_note">«Sistema» sigue el ajuste día/noche del teléfono; Claro y Oscuro se mantienen aunque el sistema cambie.</string>
 
+    <!-- Pestanas de la navegacion inferior -->
+    <string name="tab_home">Inicio</string>
+    <string name="tab_pair">Emparejar</string>
+    <string name="tab_track">Rastreo</string>
+    <string name="tab_security">Seguridad</string>
+    <string name="tab_settings">Ajustes</string>
+
     <string name="notif_channel_tracking">Seguimiento de ubicación</string>
     <string name="notif_channel_tracking_min">Seguimiento de ubicación (discreto)</string>
     <string name="notif_tracking_title">Seguimiento activo</string>
     <string name="notif_tracking_text">Reportando ubicación en segundo plano</string>
     <string name="notif_action_stop">Detener</string>
 
-    <!-- Modo antirrobo (DeviceAdmin, solo force-lock) -->
     <!-- Avisos desde el propio telefono (control parental / supervision) -->
     <string name="sos_button">🆘 SOS: pedir ayuda ahora</string>
     <string name="checkin_button">✅ Llegué bien (avisar a la familia)</string>
@@ -73,4 +79,16 @@
     <string name="setup_battery">Exención de optimización de batería</string>
     <string name="setup_pin">PIN del propietario</string>
     <string name="setup_antitheft">Modo antirrobo</string>
+
+    <!-- Flujo de permisos: feedback siempre visible -->
+    <string name="perm_denied_toast">Se necesita permiso de ubicación para el rastreo</string>
+    <string name="perm_blocked_title">Permiso bloqueado</string>
+    <string name="perm_blocked_msg">Android ya no muestra el diálogo de este permiso. Concede \"Ubicación\" (y \"Permitir todo el tiempo\" si quieres rastreo con la pantalla apagada) desde los ajustes de la app; se abrirán ahora.</string>
+    <string name="perm_blocked_open">Abrir ajustes</string>
+    <string name="perm_settings_fail">No se pudo abrir Ajustes: búscala en el sistema y concede el permiso manualmente</string>
+    <string name="later">Ahora no</string>
+
+    <!-- Menu de la barra superior -->
+    <string name="menu_themes">Cambiar tema</string>
+    <string name="menu_setup">Puesta a punto</string>
 </resources>
