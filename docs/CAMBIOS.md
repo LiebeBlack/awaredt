@@ -19,7 +19,7 @@ Si el panel dice *«Reejecuta supabase-setup.sql: falta …»* es exactamente es
   solo compilan y suben artifact.
 - **Firma con keystore persistente** (cache + opción de keystore cifrado en el repo):
   las actualizaciones se instalan sobre la versión anterior **sin desinstalar**.
-  Configuración y avisos en [RELEASE.md](RELEASE.md).
+  Configuración y avisos en [RELEASE.md](../RELEASE.md).
 - **Versionado automático**: `versionName = <AAAA.M.D>-<n>` y `versionCode` incremental
   en cada push; las etiquetas `v1.x` firman con la misma clave y publican su release
   estable (`release.yml`).
