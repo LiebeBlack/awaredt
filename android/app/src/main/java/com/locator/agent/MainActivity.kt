@@ -230,7 +230,8 @@ class MainActivity : AppCompatActivity() {
         val tamper = TamperCheck.summary(this)
         securityText.text = "$pin · $admin · $remote\n$tamper"
         btnAntiTheft.text =
-            if (DeviceAdmin.isActive(this)) "Desactivar modo antirrobo" else "Activar modo antirrobo (bloqueo remoto)"
+            if (DeviceAdmin.isActive(this)) getString(R.string.btn_anti_theft_off)
+            else getString(R.string.btn_anti_theft_on)
     }
 
     /**
@@ -523,9 +524,10 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 ServiceStateHolder.state.collect { st ->
-                    btnToggle.text = if (st.running) "Detener rastreo" else "Iniciar rastreo"
+                    btnToggle.text =
+                        if (st.running) getString(R.string.btn_toggle_stop) else getString(R.string.btn_toggle_start)
                     statusText.text = if (!st.running) {
-                        "Detenido"
+                        getString(R.string.status_stopped)
                     } else {
                         val lat = st.lastLat
                         val lon = st.lastLon

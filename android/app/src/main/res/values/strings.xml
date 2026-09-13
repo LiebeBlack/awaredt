@@ -33,6 +33,10 @@
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Oscuro</string>
     <string name="footer_note">El rastreo funciona solo con tu consentimiento. La notificación permanente es un requisito de Android y el botón Detener siempre está disponible: con PIN definido, pide el PIN para evitar que un tercero apague el rastreo.</string>
+    <string name="btn_toggle_start">Iniciar rastreo</string>
+    <string name="btn_toggle_stop">Detener rastreo</string>
+    <string name="status_stopped">Detenido</string>
+    <string name="theme_note">«Sistema» sigue el ajuste día/noche del teléfono; Claro y Oscuro se mantienen aunque el sistema cambie.</string>
 
     <string name="notif_channel_tracking">Seguimiento de ubicación</string>
     <string name="notif_channel_tracking_min">Seguimiento de ubicación (discreto)</string>
