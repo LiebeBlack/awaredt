@@ -268,11 +268,11 @@ broadcasts implícitos abiertos.
 
 | Recurso | Qué comprueba |
 |---|---|
-| `.github/workflows/android.yml` | Compila el APK (Gradle) |
+| `.github/workflows/android.yml` | Compila, firma y **publica** el APK en «Última compilación» con cada push a main |
 | `.github/workflows/web.yml` | `node --check` de los JS, estructura de páginas y SQL, ausencia de credenciales de ejemplo |
 | `.github/workflows/deploy-pages.yml` | Publica `web/` en GitHub Pages |
 | `.github/workflows/quality.yml` | XML, cableado (ids/strings/paquetes/JS) y documentación al día |
-| `.github/workflows/release.yml` | APK firmado y publicación de la release |
+| `.github/workflows/release.yml` | APK estable firmado al crear una etiqueta `v*` |
 | `scripts/check-xml.ps1` | Los 8 XML de `android/` |
 | `scripts/serve.ps1` | Servidor local para probar el panel |
 | `scripts/check-docs.ps1` | **Este mapa**: que cada recurso del código siga documentado aquí |

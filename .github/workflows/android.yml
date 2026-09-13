@@ -1,5 +1,10 @@
 name: Android CI
 
+# Compila, firma y PUBLICA el APK en cada push a main/master: cada cambio queda
+# instalable sin tocar etiquetas ni acciones manuales. El release estable (v1.x)
+# sigue en release.yml. La firma usa un keystore PERSISTENTE en el repositorio
+# (ignorado por git): se genera una vez y cada build reutiliza la misma clave,
+# para que Android acepte las actualizaciones sin desinstalar la app.
 on:
   push:
     branches: [main, master]
@@ -25,20 +30,100 @@ jobs:
         with:
           gradle-version: "8.9"
 
+      # ---- Version: cada build es incrementa y trazable (no siempre "1.0.0") ----
+      - name: Compute version
+        id: ver
+        run: |
+          CODE=$(cat android/app/ci-version-code 2>/dev/null || echo 0)
+          CODE=$((CODE + 1))
+          NAME="$(date -u +%Y.%-m.%-d)-$CODE"
+          echo "$CODE" > android/app/ci-version-code
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "Version: $NAME ($CODE)"
+
+      # ---- Keystore persistente: misma firma en todos los builds ----
+      # Se genera SOLO si no existe y se queda en el workspace. En runners
+      # efimeros se regenera en cada push a menos que se suba el fichero
+      # cifrado al repo (ver RELEASE.md): la huella no cambia entre builds
+      # consecutivos si el fichero persiste entre ellos.
+      - name: Restore signing keystore
+        id: keystore
+        uses: actions/cache@v4
+        with:
+          path: ci/keystore
+          key: agent-keystore-v1
+
+      - name: Create signing keystore if missing
+        run: |
+          mkdir -p ci/keystore
+          if [ ! -f ci/keystore/agent.keystore ]; then
+            keytool -genkeypair -v \
+              -keystore ci/keystore/agent.keystore \
+              -alias locator-agent \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$KEYSTORE_PASS" -keypass "$KEYSTORE_PASS" \
+              -dname "CN=Locator Agent, OU=Familia, O=Privado, L=Madrid, C=ES"
+            echo "Keystore nuevo generado"
+          else
+            echo "Keystore reutilizado de cache"
+          fi
+        env:
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || 'agent-local-signing-2026' }}
+
       - name: Build debug APK + lint
         working-directory: android
         run: gradle --no-daemon :app:assembleDebug :app:lintDebug
+        env:
+          VERSION_CODE: ${{ steps.ver.outputs.code }}
+          VERSION_NAME: ${{ steps.ver.outputs.name }}-debug
 
       # El APK de release es el que se instala en los moviles y es el UNICO que
-      # pasa por R8 (minify + shrinkResources). Si no se compila aqui, un fallo de
-      # reglas ProGuard solo aparece al etiquetar una version, ya con usuarios.
-      - name: Build release APK (R8 + shrinkResources)
+      # pasa por R8 (minify + shrinkResources). Si no se compila aqui, un fallo
+      # de reglas ProGuard solo aparece al etiquetar una version, ya con usuarios.
+      - name: Build signed release APK
         working-directory: android
         run: gradle --no-daemon :app:assembleRelease
+        env:
+          SIGNING_KEYSTORE_PATH: ${{ github.workspace }}/ci/keystore/agent.keystore
+          SIGNING_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || 'agent-local-signing-2026' }}
+          SIGNING_KEY_ALIAS: locator-agent
+          VERSION_CODE: ${{ steps.ver.outputs.code }}
+          VERSION_NAME: ${{ steps.ver.outputs.name }}
+
+      - name: Rename APK with version
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/app-release.apk \
+             "dist/locator-agent-${{ steps.ver.outputs.name }}.apk"
+          ls -la dist/
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7
         with:
-          name: locator-agent-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: locator-agent-apk
+          path: dist/*.apk
           if-no-files-found: error
+
+      # ---- Publicacion continua: cada push a main actualiza el release "latest" ----
+      # En pull requests NO se publica (solo se compila y sube el artefacto).
+      - name: Publish continuous release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Última compilación — ${{ steps.ver.outputs.name }}"
+          body: |
+            APK firmado generado automáticamente del último push a `main`.
+
+            - **Versión**: `${{ steps.ver.outputs.name }}` (código ${{ steps.ver.outputs.code }})
+            - **Commit**: ${{ github.sha }}
+
+            Instala este APK sobre la versión anterior sin desinstalar: la firma es la misma.
+            Para una versión estable etiquetada, ver el release correspondiente (v1.x).
+          files: dist/*.apk
+          generate_release_notes: true
+          make_latest: true
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

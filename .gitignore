@@ -20,3 +20,6 @@ captures/
 
 # Credenciales locales (NUNCA subir al repo)
 secrets.local.md
+
+# Almacen de firma de la CI (NUNCA subir al repo)
+ci/keystore/

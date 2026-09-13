@@ -97,7 +97,8 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
 2.5. [ ] Confirmar en **Actions** que los tres workflows quedan verdes:
      - **Web CI** — sintaxis JS/SQL y estructura de páginas, sin placeholders
        en `config.js`.
-     - **Android CI** — APK en cada push (artifact `locator-agent-debug-apk`).
+     - **Android CI** — firma y **publica** el APK en el release «Última
+       compilación» con cada push (artifact `locator-agent-apk`).
      - **Deploy panel** — publica `web/` en GitHub Pages automáticamente.
 
 ---
@@ -107,9 +108,14 @@ agente Android → Supabase (gratis) → panel web en GitHub Pages (gratis).
 ### 3.A — Compilar en GitHub (recomendado, sin instalar nada)
 
 3.A.1 [ ] Hacer push del repo (incluye `.github/workflows/android.yml`).
+3.A.1b [ ] (Una sola vez) Para que las actualizaciones se instalen sin desinstalar,
+      sigue [RELEASE.md](RELEASE.md): crea el secreto `ANDROID_KEYSTORE_PASSWORD`.
+
 3.A.2 [ ] Ir a **Actions → Android CI** → esperar el ✅ (JDK 17 + Gradle 8.9,
       `assembleDebug` + `lintDebug`).
-3.A.3 [ ] Descargar el artifact **`locator-agent-debug-apk`**
+3.A.3 [ ] Descargar el APK publicado: **Releases → «Última compilación»**
+      (`locator-agent-<versión>.apk`, firmado), o el artifact
+      **`locator-agent-apk`** de la pestaña **Actions**
       (abajo de la ejecución del workflow) → contiene `app-debug.apk`.
 3.A.4 [ ] Pasar el APK al teléfono e instalarlo
       (aceptar "instalar de fuentes desconocidas" la primera vez).

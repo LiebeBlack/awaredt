@@ -12,6 +12,22 @@ hay que reejecutarlo.
 
 Si el panel dice *«Reejecuta supabase-setup.sql: falta …»* es exactamente eso: falta el paso 1.
 
+## v1.4 — Publicación continua del APK (cada push)
+
+- **`android.yml` compila, firma y PUBLICA** el APK en el release **«Última compilación»**
+  con cada push a `main`: push → APK instalable, sin tags ni acciones manuales. Los PR
+  solo compilan y suben artifact.
+- **Firma con keystore persistente** (cache + opción de keystore cifrado en el repo):
+  las actualizaciones se instalan sobre la versión anterior **sin desinstalar**.
+  Configuración y avisos en [RELEASE.md](RELEASE.md).
+- **Versionado automático**: `versionName = <AAAA.M.D>-<n>` y `versionCode` incremental
+  en cada push; las etiquetas `v1.x` firman con la misma clave y publican su release
+  estable (`release.yml`).
+- **UI premium con modo oscuro**: pantalla principal rediseñada (hero con estado en
+  vivo, tarjetas por sección, paleta índigo con variante noche) y selector de tema
+  **Sistema / Claro / Oscuro** persistido (`theme_mode`). Los textos dinámicos pasaron a
+  recursos (`btn_toggle_start/stop`, `status_stopped`).
+
 ---
 
 ## v1.3 — Control parental y lista de aplicaciones

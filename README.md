@@ -113,10 +113,17 @@ pwsh -File scripts/check-docs.ps1
 
 ### Opción A — compilar en GitHub (sin instalar nada)
 
-El repositorio incluye **GitHub Actions** (`.github/workflows/android.yml`): cada push a
-`android/**` compila `assembleDebug` + `lintDebug` con JDK 17 y Gradle 8.9, y publica el
-APK como *artifact* descargable en la pestaña **Actions** del repositorio. La web también
-se valida en cada push (`web.yml`: sintaxis JS + estructura de páginas y SQL).
+El repositorio incluye **GitHub Actions** (`.github/workflows/android.yml`): **cada push a
+`main` compila, firma y PUBLICA el APK** en el release **«Última compilación»** del repositorio
+(Releases → *latest*), con nombre de versión automático (`2026.9.12-<n>`). No hay que tocar
+tags ni acciones manuales: push → APK instalable. En pull requests solo compila y sube el
+artifact. La firma usa un keystore persistente (ver [RELEASE.md](RELEASE.md)); para que las
+actualizaciones se instalen sin desinstalar, configura una vez el secreto
+`ANDROID_KEYSTORE_PASSWORD` o sube el keystore cifrado siguiendo esa guía.
+
+Además, `assembleDebug` + `lintDebug` siguen corriendo con JDK 17 y Gradle 8.9, y el APK
+queda como *artifact* en la pestaña **Actions**. La web también se valida en cada push
+(`web.yml`: sintaxis JS + estructura de páginas y SQL).
 
 ### Opción B — compilar en local
 
@@ -192,10 +199,10 @@ android/app/src/main/java/com/locator/agent/
 tools/
   simulate-agent.mjs            → simulador del agente (prueba sin APK)
 .github/workflows/
-  android.yml     → APK debug en cada push (artifact)
+  android.yml     → firma y PUBLICA el APK en «Última compilación» con cada push
   web.yml         → valida JS/SQL + guarda de placeholders
   deploy-pages.yml → publica web/ en GitHub Pages con cada push
-  release.yml     → APK release al crear un tag v*
+  release.yml     → APK release estable al crear un tag v*
 ```
 
 ## 5. Control remoto, PIN del propietario y revocación

@@ -4,6 +4,14 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+// Firma y version para la CI (publicacion continua en cada push):
+// si las variables no existen (compilacion local), se usa la version por
+// defecto y el APK de release sale sin firmar, igual que hasta ahora.
+val ciStorePath = System.getenv("SIGNING_KEYSTORE_PATH")
+val ciStorePass = System.getenv("SIGNING_KEYSTORE_PASSWORD")
+val ciKeyAlias = System.getenv("SIGNING_KEY_ALIAS") ?: "locator-agent"
+val ciSigned = !ciStorePath.isNullOrBlank() && !ciStorePass.isNullOrBlank()
+
 android {
     namespace = "com.locator.agent"
     compileSdk = 34
@@ -12,8 +20,19 @@ android {
         applicationId = "com.locator.agent"
         minSdk = 26          // Android 8.0
         targetSdk = 34       // Android 14
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = System.getenv("VERSION_NAME") ?: "1.0.0"
+    }
+
+    signingConfigs {
+        if (ciSigned) {
+            create("ci") {
+                storeFile = file(ciStorePath!!)
+                storePassword = ciStorePass
+                keyAlias = ciKeyAlias
+                keyPassword = ciStorePass
+            }
+        }
     }
 
     buildTypes {
@@ -24,6 +43,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (ciSigned) {
+                signingConfig = signingConfigs.getByName("ci")
+            }
         }
     }
 

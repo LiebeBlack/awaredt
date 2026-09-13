@@ -1,8 +1,12 @@
 name: Android Release
 
+# Release ESTABLE: se publica al etiquetar (v1.x). Firma con el mismo keystore
+# que la CI continua, para que el APK estable se instale sobre cualquier
+# compilacion anterior sin desinstalar.
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 jobs:
   release:
@@ -24,13 +28,52 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      - name: Build release APK
+      - name: Restore signing keystore
+        id: keystore
+        uses: actions/cache@v4
+        with:
+          path: ci/keystore
+          key: agent-keystore-v1
+
+      - name: Create signing keystore if missing
+        run: |
+          mkdir -p ci/keystore
+          if [ ! -f ci/keystore/agent.keystore ]; then
+            keytool -genkeypair -v \
+              -keystore ci/keystore/agent.keystore \
+              -alias locator-agent \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$KEYSTORE_PASS" -keypass "$KEYSTORE_PASS" \
+              -dname "CN=Locator Agent, OU=Familia, O=Privado, L=Madrid, C=ES"
+            echo "Keystore nuevo generado"
+          else
+            echo "Keystore reutilizado de cache"
+          fi
+        env:
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || 'agent-local-signing-2026' }}
+
+      - name: Build signed release APK
         working-directory: android
         run: gradle --no-daemon :app:assembleRelease
+        env:
+          SIGNING_KEYSTORE_PATH: ${{ github.workspace }}/ci/keystore/agent.keystore
+          SIGNING_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || 'agent-local-signing-2026' }}
+          SIGNING_KEY_ALIAS: locator-agent
+          VERSION_NAME: ${{ github.ref_name }}
+          VERSION_CODE: ${{ github.run_number }}
+
+      - name: Rename APK with tag
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/app-release.apk \
+             "dist/locator-agent-${{ github.ref_name }}.apk"
+          ls -la dist/
 
       - name: Attach APK to GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v2
         with:
-          files: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          files: dist/*.apk
           generate_release_notes: true
           fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
